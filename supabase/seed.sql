@@ -1,0 +1,4 @@
+-- Local development seed data. Runs after migrations on `supabase db reset`.
+-- Never put real member data here.
+--
+-- Milestone 1 adds a seeded admin user for local sign-in.
