@@ -5,6 +5,8 @@ import {
   Settings,
   Users,
   Library,
+  SlidersHorizontal,
+  UserCog,
   type LucideIcon,
 } from "lucide-react";
 
@@ -14,13 +16,19 @@ export type NavItem = {
   icon: LucideIcon;
 };
 
-// Primary navigation (spec §6). Administrator items are added in Milestone 1.
+// Primary navigation (spec §6).
 export const primaryNav: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/library", label: "Music Library", icon: Library },
   { href: "/plans", label: "My Plans", icon: ListMusic },
   { href: "/events", label: "Events", icon: CalendarDays },
   { href: "/shared", label: "Shared with Me", icon: Users },
+];
+
+// Administrator-only navigation (spec §6).
+export const adminNav: NavItem[] = [
+  { href: "/admin/members", label: "Members", icon: UserCog },
+  { href: "/admin/settings", label: "App Settings", icon: SlidersHorizontal },
 ];
 
 export const settingsNav: NavItem = { href: "/settings", label: "Settings", icon: Settings };

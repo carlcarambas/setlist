@@ -15,8 +15,9 @@ Storage) · Netlify.
 | Milestone | Scope | State |
 |---|---|---|
 | 0 | Foundation: app shell, Supabase helpers, tooling, deploy | Done |
-| 1 | Auth and membership | Next |
-| 2–6 | Library, plans, sharing, events, hardening | Planned |
+| 1 | Auth and membership: sign-in, password reset, invitations, member admin | Done |
+| 2 | Music library | Next |
+| 3–6 | Plans, sharing, events, hardening | Planned |
 
 ## Local setup
 
@@ -48,6 +49,14 @@ running (for the local Supabase stack).
    ```bash
    npm run dev
    ```
+
+**Local test accounts** (created by `supabase/seed.sql`; the password is in that file):
+
+| Email | Role |
+|---|---|
+| `admin@setlist.test` | Active administrator |
+| `member@setlist.test` | Active member |
+| `invited@setlist.test` | Invited, hasn't joined yet |
 
 Local Supabase Studio runs at http://127.0.0.1:54323, and emails sent locally (invites, resets) appear in
 Mailpit at http://127.0.0.1:54324.
@@ -130,8 +139,23 @@ See [`.env.example`](.env.example).
    - `https://<site>.netlify.app/**`
    - `https://deploy-preview-*--<site>.netlify.app/**`
 4. Run `npx supabase login`, then link the project and push migrations (see [Database changes](#database-changes)).
-5. Custom SMTP and email templates are configured in Milestone 1. Supabase's built-in email only reaches
-   project team members.
+5. **Email templates** (Authentication → Emails): replace the **Invite user** and **Reset password**
+   templates with the HTML in `supabase/templates/invite.html` and `recovery.html`. Their links go to
+   `/auth/confirm`, which signs the person in on the server.
+6. **Custom SMTP** (Authentication → Emails → SMTP Settings): Supabase's built-in email only delivers to
+   your Supabase team's own addresses and is heavily rate-limited, so invitations to other members need a
+   provider. Resend's free tier works: verify a sending domain, then enter its SMTP host, port, user and
+   password here.
+7. **First administrator** (once): invitations need an admin, so the first one is made by hand.
+   1. **Authentication → Users → Add user → Create new user** with your email and a password, and tick
+      "Auto Confirm User".
+   2. **SQL Editor**, run (with your email):
+
+      ```sql
+      update public.profiles set role = 'admin', status = 'active' where email = 'you@example.com';
+      ```
+
+   3. Sign in to the app. Invite everyone else from **Members**.
 
 ### Netlify
 

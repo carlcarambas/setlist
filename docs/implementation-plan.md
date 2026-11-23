@@ -444,6 +444,17 @@ running local app.
 - The first admin is created once by a documented SQL step (`update profiles set role='admin', status='active' …`).
 - Configure custom SMTP and email templates on the staging project.
 
+**Milestone 1 notes (as built):**
+- React Hook Form is deferred to Milestone 2. The auth and admin forms are small, so they use Server
+  Actions with `useActionState` and Zod on the server, and return non-password values so input survives
+  errors.
+- Role changes (promote or demote admins) aren't in the UI yet. The first admin is set by SQL (README),
+  and further role management can be added when it's needed.
+- Deactivation sets `status = 'inactive'` and bans the auth user. RLS cuts off data immediately; the ban
+  stops session refresh and new sign-ins.
+- Signed-in pages keep their header static and load data inside their own `<Suspense>` boundary, which
+  Next.js 16's instant-navigation check requires.
+
 ### Milestone 2 — Music library
 - Migration: `music_pieces`, `arrangements`, the bucket and storage policies, plus pgTAP tests.
 - Library list with title search (trigram `ilike`), category and tag filters, pagination at 25 per page, and an

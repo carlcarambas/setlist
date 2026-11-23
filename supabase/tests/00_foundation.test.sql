@@ -24,9 +24,11 @@ select throws_ok(
 );
 
 set local role anon;
-select is_empty(
+select throws_ok(
   $$ select * from public.app_settings $$,
-  'anonymous users cannot read app_settings'
+  '42501',
+  null,
+  'anonymous users have no privileges on app_settings'
 );
 
 select * from finish();

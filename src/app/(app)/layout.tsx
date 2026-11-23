@@ -1,11 +1,40 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { Settings } from "lucide-react";
 import { Brand } from "@/components/layout/brand";
+import { MemberMenu } from "@/components/layout/member-menu";
 import { MobileTabBar } from "@/components/layout/mobile-tab-bar";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
+import { requireActiveMember } from "@/lib/auth/member";
 
-// Signed-in area. Milestone 1 adds the active-member check here.
-export default function AppLayout({ children }: LayoutProps<"/">) {
+// Only active members get past these components; RLS enforces the same rule on the data.
+async function ActiveMemberContent({ children }: { children: React.ReactNode }) {
+  await requireActiveMember();
+  return children;
+}
+
+async function MemberSidebar() {
+  const member = await requireActiveMember();
+  return (
+    <>
+      <SidebarNav isAdmin={member.role === "admin"} />
+      <div className="mt-auto">
+        <MemberMenu member={member} />
+      </div>
+    </>
+  );
+}
+
+function ContentSkeleton() {
+  return (
+    <div aria-busy="true" aria-label="Loading" className="space-y-4">
+      <div className="h-8 w-48 animate-pulse rounded-md bg-muted" />
+      <div className="h-40 animate-pulse rounded-lg bg-muted" />
+    </div>
+  );
+}
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[15rem_1fr]">
       <a
@@ -19,7 +48,9 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
         <div className="px-6">
           <Brand />
         </div>
-        <SidebarNav />
+        <Suspense fallback={<SidebarNav isAdmin={false} />}>
+          <MemberSidebar />
+        </Suspense>
       </aside>
 
       <div className="flex min-h-dvh flex-col">
@@ -35,7 +66,9 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
         </header>
 
         <main id="main" className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-24 md:px-8 md:pb-10">
-          {children}
+          <Suspense fallback={<ContentSkeleton />}>
+            <ActiveMemberContent>{children}</ActiveMemberContent>
+          </Suspense>
         </main>
       </div>
 

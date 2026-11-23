@@ -25,14 +25,34 @@ export type Database = {
           Tables: {
             "app_settings": {
                   Row: {
-                    "church_name": string,"id": boolean,"timezone": string,"updated_at": string
+                    "church_name": string,"id": boolean,"timezone": string,"updated_at": string,"updated_by": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "church_name"?: string,"id"?: boolean,"timezone"?: string,"updated_at"?: string
+                    "church_name"?: string,"id"?: boolean,"timezone"?: string,"updated_at"?: string,"updated_by"?: string | null
                   }
                   Update: {
-                    "church_name"?: string,"id"?: boolean,"timezone"?: string,"updated_at"?: string
+                    "church_name"?: string,"id"?: boolean,"timezone"?: string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "app_settings_updated_by_fkey"
+      columns: ["updated_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"profiles": {
+                  Row: {
+                    "created_at": string,"display_name": string,"email": string,"id": string,"role": Database["public"]['Enums']["member_role"],"status": Database["public"]['Enums']["member_status"],"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"display_name": string,"email": string,"id": string,"role"?: Database["public"]['Enums']["member_role"],"status"?: Database["public"]['Enums']["member_status"],"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"display_name"?: string,"email"?: string,"id"?: string,"role"?: Database["public"]['Enums']["member_role"],"status"?: Database["public"]['Enums']["member_status"],"updated_at"?: string
                   }
                   Relationships: [
                     
@@ -43,10 +63,21 @@ export type Database = {
             [_ in never]: never
           }
           Functions: {
-            [_ in never]: never
+            "complete_invitation":
+{ Args: { "p_display_name": string }; Returns: undefined
+                           },
+"is_active_member":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"is_admin":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"set_member_status":
+{ Args: { "p_status": Database["public"]['Enums']["member_status"],"p_user_id": string }; Returns: undefined
+                           }
           }
           Enums: {
-            [_ in never]: never
+            "member_role": "member"|"admin","member_status": "invited"|"active"|"inactive"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -166,7 +197,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            
+            "member_role": ["member", "admin"],"member_status": ["invited", "active", "inactive"]
           }
         }
 } as const
