@@ -99,8 +99,11 @@ All schema changes are migrations in `supabase/migrations/`; never edit a cloud 
    ```
 
    ```bash
-   npx supabase db push
+   npx supabase db push --remote
    ```
+
+   Without `--remote`, this version of the Supabase CLI targets the local database. Add `--dry-run` first to
+   see which migrations will be applied.
 
 ## Environment variables
 
@@ -111,9 +114,9 @@ See [`.env.example`](.env.example).
 | `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase API URL |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Yes | Publishable key; all access is governed by RLS |
 | `SUPABASE_SECRET_KEY` | **No** | Bypasses RLS. Server only, used solely in `src/lib/supabase/admin.ts` |
-| `NEXT_PUBLIC_SITE_URL` | Yes | Base URL for auth redirects and share links |
-| `NEXT_PUBLIC_MAX_UPLOAD_MB` | Yes | PDF size limit (default 20); keep in sync with `supabase/config.toml` |
-| `SUPABASE_PROJECT_ID` | n/a | Only for `npm run db:types:remote` |
+| `NEXT_PUBLIC_SITE_URL` | Yes | Base URL for auth redirects and share links. Optional on Netlify (defaults to the project's main address) |
+| `NEXT_PUBLIC_MAX_UPLOAD_MB` | Yes | Optional. PDF size limit (default 20); keep in sync with `supabase/config.toml` |
+| `SUPABASE_PROJECT_ID` | n/a | Optional, local only. Used by `npm run db:types:remote` |
 
 ## Deployment
 
@@ -126,7 +129,7 @@ See [`.env.example`](.env.example).
    - `http://localhost:3000/**`
    - `https://<site>.netlify.app/**`
    - `https://deploy-preview-*--<site>.netlify.app/**`
-4. Link the project and push migrations (see [Database changes](#database-changes)).
+4. Run `npx supabase login`, then link the project and push migrations (see [Database changes](#database-changes)).
 5. Custom SMTP and email templates are configured in Milestone 1. Supabase's built-in email only reaches
    project team members.
 
@@ -134,9 +137,9 @@ See [`.env.example`](.env.example).
 
 1. **Add new site → Import from Git** and pick this GitHub repository. Netlify detects Next.js; the build
    settings come from `netlify.toml`.
-2. **Site configuration → Environment variables:** add every variable from `.env.example`. Mark
-   `SUPABASE_SECRET_KEY` as secret. Set `NEXT_PUBLIC_SITE_URL` per deploy context (production URL for
-   Production, the deploy URL for previews).
+2. **Project configuration → Environment variables:** add `NEXT_PUBLIC_SUPABASE_URL`,
+   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY` (mark it as containing secret values).
+   `NEXT_PUBLIC_SITE_URL` is optional: without it the app uses the project's main Netlify address.
 3. Deploy. Netlify's free plan counts each **production** deploy against its monthly credits. Merge to `main`
    once per milestone and use deploy previews for work in progress.
 

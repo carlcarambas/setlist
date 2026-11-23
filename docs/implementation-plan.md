@@ -124,6 +124,9 @@ Versions current on npm as of today. I'll install with `^` ranges and commit the
 - **Policy performance:** policies call `(select auth.uid())`, so Postgres evaluates it once per query instead of
   once per row.
 - **Anonymous role:** gets **no** table privileges at all. Public links are resolved only on the server (§4.6).
+- **Explicit grants:** new Supabase cloud projects don't grant table privileges to `anon` or `authenticated`
+  automatically, but the local stack does. Every migration therefore states its grants explicitly
+  (`grant select, insert, … to authenticated`, `revoke all … from anon`), so local and cloud behave the same.
 
 ### 4.2 Enums and tables
 
