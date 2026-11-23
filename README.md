@@ -99,8 +99,11 @@ All schema changes are migrations in `supabase/migrations/`; never edit a cloud 
    ```
 
    ```bash
-   npx supabase db push
+   npx supabase db push --remote
    ```
+
+   Without `--remote`, this version of the Supabase CLI targets the local database. Add `--dry-run` first to
+   see which migrations will be applied.
 
 ## Environment variables
 
@@ -126,7 +129,7 @@ See [`.env.example`](.env.example).
    - `http://localhost:3000/**`
    - `https://<site>.netlify.app/**`
    - `https://deploy-preview-*--<site>.netlify.app/**`
-4. Link the project and push migrations (see [Database changes](#database-changes)).
+4. Run `npx supabase login`, then link the project and push migrations (see [Database changes](#database-changes)).
 5. Custom SMTP and email templates are configured in Milestone 1. Supabase's built-in email only reaches
    project team members.
 
