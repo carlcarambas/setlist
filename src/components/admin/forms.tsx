@@ -83,17 +83,29 @@ export function MemberStatusForm({
   userId,
   name,
   nextStatus,
+  device = false,
 }: {
   userId: string;
   name: string;
   nextStatus: "active" | "inactive";
+  /** A member device: "Block"/"Unblock" instead of "Deactivate"/"Reactivate". */
+  device?: boolean;
 }) {
-  const label = nextStatus === "inactive" ? "Deactivate" : "Reactivate";
+  const label = device
+    ? nextStatus === "inactive"
+      ? "Block"
+      : "Unblock"
+    : nextStatus === "inactive"
+      ? "Deactivate"
+      : "Reactivate";
+  const confirmText = device
+    ? `Block ${name}? It can no longer view or change anything. (Someone determined can come back by clearing their browser; archived plans can be restored.)`
+    : `Deactivate ${name}? They will lose access immediately.`;
   return (
     <form
       action={setMemberStatus}
       onSubmit={(event) => {
-        if (nextStatus === "inactive" && !window.confirm(`Deactivate ${name}? They will lose access immediately.`)) {
+        if (nextStatus === "inactive" && !window.confirm(confirmText)) {
           event.preventDefault();
         }
       }}

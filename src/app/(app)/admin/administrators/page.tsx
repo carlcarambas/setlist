@@ -4,7 +4,7 @@ import { InviteMemberForm, MemberStatusForm } from "@/components/admin/forms";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionSkeleton } from "@/components/layout/section-skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { listAdministrators } from "@/features/members/queries";
+import { listAdministrators, listMemberDevices } from "@/features/members/queries";
 import { requireAdmin } from "@/lib/auth/member";
 
 export const metadata: Metadata = { title: "Administrators" };
@@ -24,7 +24,7 @@ export default function AdministratorsPage() {
 
 async function AdministratorsContent() {
   const admin = await requireAdmin();
-  const members = await listAdministrators();
+  const [members, devices] = await Promise.all([listAdministrators(), listMemberDevices()]);
 
   return (
     <>
@@ -68,6 +68,46 @@ async function AdministratorsContent() {
               </li>
             ))}
           </ul>
+        </section>
+
+        <section aria-labelledby="devices-heading">
+          <h2 id="devices-heading" className="font-semibold">
+            Member devices ({devices.length})
+          </h2>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Devices that changed plans, most recent first. Block one if it&apos;s misusing Setlist; its changes stay
+            in each plan&apos;s history, and archived plans can be restored.
+          </p>
+          {devices.length === 0 ? (
+            <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+              No member device has changed a plan yet.
+            </p>
+          ) : (
+            <ul className="divide-y rounded-lg border">
+              {devices.map((d) => (
+                <li key={d.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{d.display_name ?? "Unnamed device"}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {d.change_count} {d.change_count === 1 ? "change" : "changes"}
+                      {d.last_change_at
+                        ? ` · last on ${new Date(d.last_change_at).toLocaleString("en", { dateStyle: "medium", timeStyle: "short" })}`
+                        : null}
+                    </p>
+                    {d.status === "inactive" ? (
+                      <span className="mt-1 inline-block rounded-full border px-2 py-0.5 text-xs">Blocked</span>
+                    ) : null}
+                  </div>
+                  <MemberStatusForm
+                    device
+                    userId={d.id}
+                    name={d.display_name ?? "this device"}
+                    nextStatus={d.status === "inactive" ? "active" : "inactive"}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       </div>
     </>

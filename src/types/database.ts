@@ -305,6 +305,11 @@ isOneToOne: false
               "created_at": string,"display_name": string,"email": string,"id": string,"status": Database["public"]['Enums']["member_status"]
             }[]
                            },
+"list_member_devices":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "change_count": number,"created_at": string,"display_name": string,"id": string,"last_change_at": string,"status": Database["public"]['Enums']["member_status"]
+            }[]
+                           },
 "music_categories":
 { Args: Record<PropertyKey, never>; Returns: string[]
                            },

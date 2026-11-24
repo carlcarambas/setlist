@@ -27,7 +27,7 @@ Storage) · Railway.
 | 7 | Local data and offline app shell: pages read from the device, background sync, precached app | Done (not deployed) |
 | 8 | Offline sheets: Keep offline per plan (self-updating), per-sheet saving, badges, storage panel, install hint | Done (not deployed) |
 | 9 | Share a plan's link; offline stays view-only (spec 2.1) | Done (not deployed) |
-| 10 | Hardening and launch | Next |
+| 10 | Hardening and launch: error pages, block devices, offline e2e tests, encrypted backups + restore drill | In progress (launch steps need the owner) |
 
 ## Local setup
 
@@ -112,6 +112,7 @@ To start over, unregister the service worker and clear site data in the browser'
 | `npm run check` | Lint, typecheck, unit tests and production build. Run before every merge |
 | `npm run lint` / `typecheck` / `test` | The individual checks |
 | `npm run test:db` | pgTAP tests in `supabase/tests/` (RLS and schema). Needs `db:start` |
+| `npm run test:e2e` | Playwright tests with the browser really offline (`e2e/`). Needs `db:start`, the seed, and `npm run build` first; creates and removes its own test data. First time: `npx playwright install chromium` |
 | `npm run db:start` / `db:stop` | Start or stop the local Supabase stack |
 | `npm run db:reset` | Rebuild the local database from migrations and seed |
 | `npm run db:types` | Regenerate `src/types/database.ts` from the local database. Run after every migration |
@@ -175,7 +176,9 @@ See [`.env.example`](.env.example).
 
 ### Supabase (cloud)
 
-1. Create a project (free tier) named `setlist-staging`. Production (`setlist-prod`) is created at Milestone 6.
+1. One project (free tier) is production; local Supabase is the development copy. Setlist reuses the
+   project first created as `setlist-staging` (rename it in Settings → General). Its early test data is
+   cleared before launch.
 2. **Authentication → Sign In / Providers:** turn **on** "Allow new users to sign up" and "Allow anonymous
    sign-ins". Supabase refuses anonymous sign-ins (member devices) when sign-ups are off. People who
    register by email themselves get no administrator rights and can't sign in to the app.
@@ -204,6 +207,9 @@ See [`.env.example`](.env.example).
 
    3. Sign in to the app (**Settings → Administrator sign in**). Invite other administrators from
       **Administrators**. Members need nothing: they just open the app.
+9. **Backups:** add the four repository secrets listed at the top of `.github/workflows/backup.yml`
+   (GitHub → Settings → Secrets and variables → Actions), then run the Backup workflow once by hand.
+   Restoring is described in [`docs/runbook.md`](docs/runbook.md).
 
 ### Railway
 
@@ -223,6 +229,9 @@ Railway runs the app as an ordinary Node.js server (`npm run build`, then `npm s
 5. Railway bills by usage. Deploys from `main` go live, so merge once per milestone and set a usage
    limit in the workspace's billing settings.
 
+Launch order and checks: [`docs/launch-checklist.md`](docs/launch-checklist.md). Operating notes (backups,
+restore, misuse, costs): [`docs/runbook.md`](docs/runbook.md).
+
 ## Security rules
 
 - RLS is enabled on every table; `npm run test:db` fails if a table in `public` doesn't have it.
@@ -234,3 +243,5 @@ Railway runs the app as an ordinary Node.js server (`npm run build`, then `npm s
 - Members are anonymous Supabase users. Emails are never readable by members (column grants); the
   `anon` role (no session) has no table access. Pages are `noindex` and `robots.txt` disallows crawling.
 - Never commit `.env*` files except `.env.example`, and never put real member data in `seed.sql`.
+- Backups are encrypted before they leave the GitHub runner; the passphrase lives only in GitHub secrets
+  and your password manager.
