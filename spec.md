@@ -1234,7 +1234,7 @@ The product should make this workflow easier than coordinating setlists through 
 
 ## 19. Approved Amendments
 
-Approved 2026-11-22. Details and rationale: [`docs/implementation-plan.md`](docs/implementation-plan.md) §7–§8.
+Approved 2026-11-22 (P9: 2026-11-24). Details and rationale: [`docs/implementation-plan.md`](docs/implementation-plan.md) §7–§8.
 Where an amendment conflicts with an earlier section of this document, the amendment wins.
 
 | # | Amendment | Affects |
@@ -1246,4 +1246,5 @@ Where an amendment conflicts with an earlier section of this document, the amend
 | P5 | Custom SMTP and a sending domain are required from Milestone 1 (Supabase's built-in email only reaches project team members). | §12, §14 |
 | P6 | Add reset-password and `/auth/confirm` routes; Next.js 16 uses `src/proxy.ts` instead of `middleware.ts`. | §6, §7.5 |
 | P7 | Ambiguity defaults: `published` is a label only; any active member creates events, creator or admin edits/deletes them; events are hard-deleted (associations cascade); archived music stays readable but cannot be added to plans; public links stop working when the owner is inactive; shares survive owner deactivation and an admin transfer-ownership action follows in Milestone 6; anyone who can view a plan can duplicate it; plan owners and editors attach plans to events; event pages show only plans the viewer can access; active members can see member emails for share search; password-based invitation acceptance. | §3, §4, §10 |
-| P8 | Installable through a web app manifest only; no service worker or offline caching. | §1, constitution |
+| P8 | Installable through a web app manifest only; no service worker or offline caching. *Superseded in part by P9.* | §1, constitution |
+| P9 | **Offline viewing (approved 2026-11-24).** Plans a member has opened, and the PDF sheets they reference, stay viewable on that device without a connection. Creating, editing, sharing, uploading and admin actions require a connection; while offline the app says so and disables them. Offline copies are removed on sign-out. Built in Milestone 3 with a service worker. Offline editing and sync are out of scope. | §1.3, §4.3, §13, §14 |

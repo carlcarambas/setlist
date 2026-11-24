@@ -476,6 +476,20 @@ running local app.
   - A Saving / Saved / Save failed indicator with Retry. Unsaved input is kept on failure.
   - On a version conflict: "This plan changed — reload", without overwriting anything.
 - "Last updated by X" display and an activity list.
+- **Offline viewing (spec §19 P9):**
+  - A small hand-written service worker (no framework plugin) caches the app shell and the plan view
+    pages a member opens.
+  - Opening a plan also stores its PDF sheets in Cache Storage, fetched once through the signed-URL
+    route, so they open later with no connection. A plan page shows "Available offline" once its sheets
+    are saved.
+  - Offline, the app shows a banner and disables editing, uploading and sharing controls.
+  - Sign-out clears the offline caches. A deactivated member's device keeps its copies until it next
+    comes online and is signed out. That's an accepted limit of offline viewing.
+  - iPhone/iPad: Safari can clear stored data for websites that haven't been used for about a week.
+    Installed (Add to Home Screen) apps aren't affected, so members who need offline sheets should
+    install the app.
+  - Cost: sheets are downloaded once per device per version, which adds Supabase egress roughly
+    proportional to plans opened. Still well within the free tier at this ministry's size.
 
 ### Milestone 4 — Sharing
 - Migration: `plan_shares`, `plan_links`, plus pgTAP tests (including the anonymous role having zero access).
@@ -579,6 +593,7 @@ None are applied yet. Each needs your OK; the spec stays as written until then.
 | P6 | Add reset-password and `/auth/confirm` routes; use `proxy.ts` instead of `middleware.ts` | AUTH-03 needs a screen; Next.js 16 naming |
 | P7 | Adopt the ambiguity defaults 1–13 above | Avoid guessing during implementation |
 | P8 | Constitution Principle II: drop the service-worker requirement (manifest only) | Smallest way to satisfy "installable" without offline caching complexity |
+| P9 | Offline viewing of opened plans and their sheets (approved 2026-11-24); editing stays online-only | Musicians need setlists where there's no signal. A service worker is allowed because the spec now requires offline use (constitution Principle II) |
 
 ---
 
