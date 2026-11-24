@@ -2,7 +2,7 @@
 ## Product Requirements & Technical Specification
 
 **Document status:** Approved baseline (2026-11-24). Replaces v1.0, kept at [`docs/spec-v1.md`](docs/spec-v1.md).  
-**Version:** 2.0 (offline-first)  
+**Version:** 2.1 (view-only offline)  
 **Date:** 2026-11-24  
 **Product name:** Setlist (working name)  
 **Primary platform:** Installable Progressive Web App (desktop, tablet, mobile)  
@@ -11,11 +11,17 @@
 
 **What changed from v1.0:**
 - Members no longer sign in; only administrators do.
-- The app must work offline on each device.
+- The app must stay usable offline on each device: **view-only** (2.1). Changes need a connection.
 - Only administrators change the music library.
 - Everyone can view and edit every plan, so member sharing and public links are removed.
 - v1.0 amendments P1–P9 are folded into the text below where they still apply.
 - Rationale: [`docs/offline-first-assessment.md`](docs/offline-first-assessment.md).
+
+**What changed in 2.1 (2026-11-24):** offline is view-only. Plans and events are created and edited only
+while online; offline, the app, synced plans, songs, events and saved sheets stay viewable, and every
+change is blocked with "Needs a connection". Removed: offline editing, the change queue, conflict
+resolution between offline edits, and the update prompt that protected queued changes (former OFF-06,
+OFF-07, OFF-08, OFF-12; former Milestone 9). Added: a Share button that sends a plan's link (PLAN-15).
 
 ---
 
@@ -36,7 +42,7 @@ an account; administrators sign in to manage the library.
 2. Let anyone in the ministry open Setlist, find songs and view sheets without signing in.
 3. Let members create, edit and reorder plans, together, with no accounts.
 4. Keep plans and downloaded sheets usable with no internet connection.
-5. Sync offline changes automatically and never lose a member's edit silently.
+5. Keep plans and sheets viewable offline; make every change online, so there's nothing to merge later.
 6. Work on desktop, tablet and mobile browsers from one installable app.
 7. Keep infrastructure and maintenance costs low for a solo developer.
 
@@ -52,7 +58,7 @@ Do not implement these unless explicitly approved:
 - Musician or instrument assignment, rehearsal scheduling
 - Chat, comments, push notifications
 - Real-time multiplayer editing / live cursors
-- Automatic item-level merging of conflicting plan edits
+- Editing while offline (plans, events or anything else), change queues and offline conflict resolution
 - Chord transposition, AI recommendations, sheet music generation
 - Payments or subscriptions
 
@@ -74,8 +80,8 @@ These decisions are confirmed and are requirements:
 | Plan deletion | Anyone archives; only administrators permanently delete (D4) |
 | Events | Kept. Viewable offline; created and edited online by anyone; deleted by administrators (D2) |
 | Attribution | Optional display name per device, shown in plan activity (D5) |
-| Offline | Per device only. App shell, library metadata, plans and downloaded sheets work offline |
-| Sync | Automatic when online, retried on app start; conflicts are resolved by the member, never silently |
+| Offline | Per device, **view-only**: app, library, plans, events and saved sheets open offline; changes need a connection |
+| Sync | One-way, server to device: automatic when online and on app start |
 | Platform | Installable PWA, one codebase |
 | Budget | Free tiers during development; low recurring production cost |
 | Architecture | Simple modular application; no microservices |
@@ -93,7 +99,8 @@ These decisions are confirmed and are requirements:
 - Views, creates, edits, reorders and archives any plan; duplicates plans.
 - Views events; creates and edits events while online; attaches plans to events while online.
 - Can set an optional display name for this device.
-- Works offline with everything previously synced or downloaded on this device.
+- Views everything previously synced or downloaded on this device while offline; changes need a
+  connection.
 
 **Administrator**
 - Signs in with email and password.
@@ -113,9 +120,10 @@ These decisions are confirmed and are requirements:
 | Download sheets for offline use | Yes | Yes | No (needs a connection) |
 | Upload, replace, archive, delete music; edit metadata | No | Yes | No |
 | View plans | Yes | Yes | Yes |
-| Create, edit, reorder plans; edit item notes | Yes | Yes | Yes (queued) |
-| Duplicate plan | Yes | Yes | Yes (queued) |
-| Archive / restore plan | Yes | Yes | Yes (queued) |
+| Create, edit, reorder plans; edit item notes | Yes | Yes | No |
+| Duplicate plan | Yes | Yes | No |
+| Archive / restore plan | Yes | Yes | No |
+| Share a plan's link | Yes | Yes | Yes (sending it needs a connection) |
 | Permanently delete plan | No | Yes | No |
 | View events | Yes | Yes | Yes (read-only) |
 | Create/edit events, attach/detach plans | Yes | Yes | No |
@@ -202,20 +210,21 @@ active, archived); uploaded by/at; updated at.
 
 | ID | Requirement | Priority |
 |---|---|---|
-| PLAN-01 | Everyone can create multiple plans, online or offline | Must |
+| PLAN-01 | Everyone can create multiple plans (online) | Must |
 | PLAN-02 | Plan title is required | Must |
 | PLAN-03 | Plan description is optional | Should |
-| PLAN-04 | The plan editor can search the library (offline: synced metadata) | Must |
+| PLAN-04 | The plan editor can search the library | Must |
 | PLAN-05 | Add a selected arrangement to a plan | Must |
 | PLAN-06 | Remove a plan item | Must |
 | PLAN-07 | Reorder items with drag and drop (and an accessible alternative) | Must |
 | PLAN-08 | Open the selected sheet from the plan | Must |
-| PLAN-09 | Changes save on the device immediately and sync reliably | Must |
+| PLAN-09 | Changes save reliably; concurrent edits never overwrite silently (version check) | Must |
 | PLAN-10 | Duplicate a plan | Should |
 | PLAN-11 | Archive and restore a plan | Should |
 | PLAN-12 | Notes on a plan item | Should |
 | PLAN-13 | Show who (device display name) and when a plan was last updated | Should |
 | PLAN-14 | Record activity for important changes | Should |
+| PLAN-15 | Share a plan's link with the team (the phone's share sheet, or copy the link) | Should |
 
 **Plan fields:** id (generated on the device); title; description; status (draft, published, archived;
 `published` is a label only); version; created by/at; updated by/at; deleted at (administrator delete).
@@ -229,9 +238,9 @@ A plan can exist without an event. Every plan is visible to everyone.
 - Position determines the visible order. A reorder is saved as one change containing the full order.
 - The server verifies that every item belongs to the plan.
 
-**Save states.** Each plan shows one of: *Saved on this device*, *Syncing…*, *Synced*, *Waiting for
-connection*, *Sync failed — retrying*, *Needs your attention* (conflict). Unsynced input is never
-discarded.
+**Save states.** The editor shows *Saving…*, *Saved* and *Save failed* (with retry); failed input is kept
+on screen. If someone else changed the plan first, the save is refused with "Someone else changed this
+plan. Reload to see their changes" (version check). Offline, the editor isn't available.
 
 ### 4.4 Events
 
@@ -252,25 +261,22 @@ Event fields: id, title, description, event date, start time, created by/at, upd
 calendar dates in the church's configured timezone (`app_settings.timezone`, default `Asia/Manila`);
 "upcoming" and "past" are computed in that timezone, never the device's.
 
-Creating or editing events and attaching plans require a connection. A plan created offline can be
-attached once it has synced.
+Creating or editing events and attaching plans require a connection.
 
-### 4.5 Offline use and sync
+### 4.5 Offline use (view-only)
 
 | ID | Requirement | Priority |
 |---|---|---|
 | OFF-01 | Installable PWA (web app manifest + service worker) | Must |
 | OFF-02 | The app shell opens with no connection on any device where it was opened before | Must |
-| OFF-03 | Library metadata, plans and events are stored on the device (IndexedDB) and kept in sync | Must |
+| OFF-03 | Library metadata, plans and events are stored on the device (IndexedDB) and kept up to date from the server | Must |
 | OFF-04 | Members can download a sheet, all sheets of a plan, or (Should) the whole library | Must |
 | OFF-05 | Every song, plan and sheet shows whether it is available offline | Must |
-| OFF-06 | Plans can be created and edited offline; changes are queued | Must |
-| OFF-07 | Queued changes sync automatically when the connection returns, on app start and on a retry timer | Must |
-| OFF-08 | Conflicting edits are detected and resolved by the member; nothing is overwritten silently | Must |
+| OFF-06 | Offline, every action that changes data is unavailable and says it needs a connection | Must |
 | OFF-09 | Storage usage is shown; full storage and failed downloads are reported with a retry | Must |
 | OFF-10 | The app asks the browser for persistent storage and suggests installing on iOS | Should |
-| OFF-11 | Members can remove downloaded sheets and clear offline data, warned about unsynced changes | Should |
-| OFF-12 | A new app version is offered with "Reload to update" and never drops queued changes | Must |
+| OFF-11 | Members can remove downloaded sheets and clear offline data | Should |
+| OFF-12 | A new app version takes over the next time the app is opened after being closed | Must |
 
 **What the device keeps**
 - App shell: every page needed for the member area, precached by the service worker.
@@ -279,27 +285,14 @@ attached once it has synced.
 - Sheets: only the PDFs the member downloaded, or opened (opened sheets are kept), keyed by arrangement
   and file version.
 
-**Sync rules**
-- Pull: fetch everything changed since the device's last sync, per table, including tombstones and
-  status changes. First sync downloads all metadata.
-- Push: local changes are written to IndexedDB first, then to an outbox. Per plan, pending changes are
-  sent as one snapshot (title, description, status, ordered items with notes) with the version the
-  member started from and a unique change id, so a retry never applies twice.
-- The server applies the snapshot in one transaction only if the plan's version still matches, then
-  increments the version and records activity.
-- Triggers: app start, the browser coming online, returning to the app, and a timer with backoff.
-  Background sync while the app is closed is not required (iOS Safari doesn't support it).
-
-**Conflict resolution**
-- If another device saved the plan first, the push is refused and the device receives the current
-  server copy. The plan is marked *Needs your attention* and the member chooses:
-  1. **Keep theirs**: discard my offline changes to this plan.
-  2. **Keep mine**: replace the server copy with mine (recorded in activity).
-  3. **Save mine as a new plan**: keep both.
-- If the plan was archived elsewhere, the choices are **Restore with my changes** or **Save mine as a
-  new plan**. If it was permanently deleted by an administrator, only **Save mine as a new plan**.
-- An arrangement archived or replaced while a device was offline keeps working from the downloaded
-  copy; the app shows *Archived* or *Newer version available*.
+**Sync (one way: server → device)**
+- Fetch everything changed since the device's last sync, per table, including tombstones and status
+  changes. First sync downloads all metadata.
+- Triggers: app start, the browser coming online, returning to the app, page changes, after each online
+  edit, and a timer with backoff. Background sync while the app is closed is not required.
+- Edits go straight to the server (online only), then the device picks them up with the next sync.
+- A sheet replaced while a device was offline keeps working from the saved copy, marked as an older
+  version; the new one downloads when online.
 
 **Storage limits**
 - Show used and available space (`navigator.storage.estimate()` where supported).
@@ -313,7 +306,6 @@ attached once it has synced.
 - Upcoming events
 - Recently updated plans
 - Recently added music
-- Unsynced changes and conflicts (only when there are any)
 - Quick action: create a plan
 - Quick action (administrators): upload music
 
@@ -326,20 +318,21 @@ Keep it focused; no charts or administrative metrics.
 ### 5.1 Prepare a phone for Sunday
 1. Member opens the Setlist address (online), optionally installs it.
 2. The library, plans and events sync in the background.
-3. Member opens the Sunday plan and taps **Make available offline**; the plan's sheets download with
-   progress shown.
+3. Member opens the Sunday plan and taps **Keep offline**; the plan's sheets download with progress
+   shown.
 4. At church with no signal, the member opens Setlist from the Home Screen, opens the plan and swipes
    through the sheets.
 
-### 5.2 Build a plan offline
-1. Member creates a plan with no connection; it shows *Saved on this device*.
-2. Member searches the synced library, adds arrangements and reorders them.
-3. When the phone is back online, the plan syncs and shows *Synced*.
+### 5.2 Plan for an event and share it with the team
+1. Member (online) creates a plan, searches the library, adds songs and puts them in order.
+2. Member adds the plan to the event (e.g. Sunday Service).
+3. Member taps **Share** on the plan and sends the link to the team chat.
+4. Team members open the link, tap **Keep offline**, and have the sheets ready at church.
 
 ### 5.3 Two members edit the same plan
-1. Two members change the same plan while offline.
-2. The first to reconnect syncs normally.
-3. The second sees *Needs your attention*, compares, and chooses Keep theirs / Keep mine / Save as new.
+1. Both have the plan's editor open online and save changes at nearly the same time.
+2. The first save wins; the second is refused with "Someone else changed this plan. Reload to see their
+   changes", and the member's input stays on screen to redo after reloading.
 
 ### 5.4 Administrator uploads music
 1. Administrator signs in, opens the library and chooses **Add music**.
@@ -363,14 +356,13 @@ Administrators also see: Add music, Administrators, Application settings.
 
 | Screen | Purpose | Offline |
 |---|---|---|
-| Home | Overview, sync status, quick actions | Yes |
+| Home | Overview, quick actions | Yes |
 | Library | Search and browse | Yes |
 | Music details | Arrangements, sheet viewer, download | Yes (downloaded sheets) |
 | Sheet viewer | Full-width PDF view | Yes (downloaded sheets) |
-| Plans | All plans, with offline availability and sync state | Yes |
-| Plan details | Read view, "Make available offline" | Yes |
-| Plan editor | Search, add, remove, reorder, notes | Yes |
-| Conflict resolution | Compare and choose | Yes |
+| Plans | All plans, with offline availability | Yes |
+| Plan details | Read view, "Keep offline", Share | Yes |
+| Plan editor | Search, add, remove, reorder, notes | No; says so when offline |
 | Events / Event details | Upcoming and past; plans per event | Yes (read-only) |
 | Settings | Device name, storage, remove data, install, sign in | Yes (sign-in needs a connection) |
 | Administrator sign-in / reset password / accept invitation | Administrator auth | No |
@@ -384,7 +376,7 @@ Administrators also see: Add music, Administrators, Application settings.
 
 ### Design principles
 - Mobile-first, restrained, readable on stage (large title and key).
-- Clear offline, sync, loading, error and empty states; never only color.
+- Clear offline, loading, error and empty states; never only color.
 - Keyboard accessible; respects reduced motion.
 
 ---
@@ -425,10 +417,13 @@ No NestJS, no microservices, no local server.
 ```text
 Device (browser / installed PWA)
   Service worker: app shell + assets
-  IndexedDB: library metadata, plans, events, outbox, sync state
+  IndexedDB: library metadata, plans, events, sync state, saved-sheet index
   Cache Storage: downloaded PDFs
-  Member pages (client-rendered) ──── read/write local data
-        |  sync engine (when online)
+  Member pages (client-rendered) ──── read local data
+        ^  sync engine (server → device, when online)
+        |
+  Edits (online only) ──────────────► server (RLS / SQL functions)
+        |
         v
   Supabase: Auth (anonymous + admin) · PostgreSQL (RLS) · Storage (private)
         ^
@@ -443,7 +438,8 @@ Device (browser / installed PWA)
 - Privileged work (upload validation, administrator management, permanent deletes, storage cleanup)
   runs on the server. The secret key never reaches the browser.
 - RLS is the security boundary for everything the browser does directly. Never rely on UI checks.
-- Plan writes from the browser go through one SQL function (`sync_plan`) that checks the version.
+- Plan edits are online-only and go through the existing SQL functions, which check the plan version
+  so concurrent edits never overwrite silently. Offline, every change is unavailable.
 
 ### 7.5 Source structure (target)
 
@@ -457,7 +453,7 @@ src/
   components/
   features/
     local-db/        Dexie schema and queries
-    sync/            pull, outbox, push, conflicts
+    sync/            pull (server → device)
     offline/         sheet downloads, storage estimates
     library/  plans/  events/  admin/
   lib/supabase/
@@ -477,13 +473,14 @@ PostgreSQL with UUID primary keys. Ids for plans and plan items may be generated
   `display_name`, `email` (administrators only), `is_anonymous`, timestamps.
 - **music_pieces**: as §4.2, plus `tags text[]`, `updated_at` index for sync.
 - **arrangements**: as §4.2, including `content_sha256` and status `pending|active|archived`.
-- **plans**: as §4.3, with `version`, `updated_at`, `deleted_at`.
-- **plan_items**: as §4.3, with `removed_at`; unique active position per plan.
+- **plans**: as §4.3, with `version` and `updated_at`.
+- **plan_items**: as §4.3; unique position per plan.
+- **deleted_rows**: tombstones (table, id, time) for deleted plans, items, events and event links, so
+  devices remove them; kept 90 days.
 - **events**: as §4.4.
 - **event_plans**: event, plan, position, created at; unique (event, plan); cascade on event delete.
 - **plan_activities**: plan, actor, action, metadata, created at. Actions: plan created/updated,
-  item added/removed, reordered, archived/restored, duplicated, conflict overwritten.
-- **sync_changes** (or equivalent): applied change ids for idempotent pushes.
+  item added/removed, reordered, notes edited, status changed, duplicated.
 - **app_settings**: single row: church name, timezone, upload size limit.
 
 Removed from v1: `plan_shares`, `plan_links`.
@@ -519,7 +516,7 @@ RLS is mandatory on every table and storage object. The `anon` role (no session)
 |---|---|---|
 | profiles | Own row; administrators all; display names readable by any session | Own `display_name`; administrators change role/status |
 | music_pieces, arrangements, storage writes | Any session | Active administrators only |
-| plans, plan_items | Any session (except permanently deleted) | Any session through `sync_plan` / plan functions; permanent delete administrators only |
+| plans, plan_items | Any session | Any session through the plan functions (version-checked); permanent delete administrators only |
 | events, event_plans | Any session | Any session creates/edits/attaches; delete administrators only |
 | plan_activities | Any session | Written by SQL functions only |
 | app_settings | Any session | Administrators only |
@@ -529,16 +526,18 @@ RLS is mandatory on every table and storage object. The `anon` role (no session)
 - Never trust ids from the browser for authorship; take them from the verified session.
 - Validate every mutation in SQL functions or server code.
 - Test with pgTAP: no-session access, anonymous member, administrator, deactivated administrator,
-  blocked device, version conflicts, idempotent retries.
+  blocked device, version conflicts.
 - Pages are `noindex`; `robots.txt` disallows crawling.
 
 ---
 
 ## 11. Server Operations
 
-**Browser → Supabase (RLS):** pull changes; `sync_plan(id, base_version, snapshot, change_id)`;
-duplicate plan; archive/restore plan; create/update event; attach/detach plan; set display name;
-request a sheet URL.
+**Browser → Supabase (RLS):** pull changes (`pull_changes`); request a sheet URL.
+
+**Online-only member operations (server actions / SQL functions, version-checked for plans):** create
+plan; edit details, songs, order and notes; duplicate; archive/restore; create/update event;
+attach/detach plan; set display name.
 
 **Next.js server (administrator, online only):** prepare upload / finalize upload / replace PDF;
 update music metadata; archive, restore, delete music; permanently delete plan or event; invite,
@@ -567,7 +566,7 @@ safely, and returns a minimal typed result.
 | Area | Requirement |
 |---|---|
 | Availability | Member features work offline on previously used devices |
-| Data safety | No silent loss of local edits; idempotent sync; conflicts surfaced |
+| Data safety | Edits are saved on the server only; concurrent plan edits are refused, never silently overwritten |
 | Responsiveness | Mobile, tablet, desktop |
 | Security | RLS everywhere; administrator-only library writes; CAPTCHA; private storage |
 | Performance | Local reads render instantly; first sync of a few thousand songs within seconds |
@@ -599,10 +598,9 @@ Per-sheet and per-plan downloads; availability badges; storage usage, quota and 
 persistent storage request; iOS install guidance.
 **Exit:** a plan made available offline shows all its sheets with no network.
 
-### Milestone 9 — Offline editing and sync
-Device-generated ids; outbox; `sync_plan` with version check and idempotency; automatic retries;
-conflict resolution screen; update prompt that keeps the queue.
-**Exit:** offline edits sync on reconnect, and conflicts never lose data.
+### Milestone 9 — Share and simplify (replaces "Offline editing and sync", dropped in 2.1)
+Share button on the plan page (the phone's share sheet, or copy the link). Offline stays view-only.
+**Exit:** a member can send a plan's link to the team from the plan page.
 
 ### Milestone 10 — Hardening and launch
 Offline end-to-end tests (network turned off); real iOS Safari and Android Chrome checks; abuse controls
@@ -627,19 +625,17 @@ acceptance test with ministry members.
 
 ### Plans
 - [ ] Anyone can create, edit, reorder, duplicate and archive any plan.
-- [ ] Order and notes persist after reload, online and offline.
+- [ ] Order and notes persist after reload, and are visible offline.
+- [ ] A plan's link can be shared from the plan page and opens the plan for another member.
 - [ ] Only administrators can permanently delete a plan.
 
 ### Offline
 - [ ] With the network off, a previously used device opens the app, the library, plans and events.
 - [ ] A plan made available offline opens every sheet with the network off.
 - [ ] Each song, plan and sheet shows whether it is available offline.
-- [ ] A plan created and edited offline syncs automatically when the network returns.
-- [ ] A sync interrupted halfway retries without duplicating changes.
-- [ ] Two devices editing the same plan offline produce a conflict screen; each choice works and no edit
-      is lost without the member choosing it.
+- [ ] Offline, every action that changes data says it needs a connection; nothing is half-saved.
+- [ ] Changes made elsewhere reach the device the next time it's online.
 - [ ] A full disk or failed download is reported and can be retried.
-- [ ] Updating the app keeps unsynced changes.
 
 ### Events
 - [ ] Events can be created and edited online and viewed offline.
@@ -678,7 +674,7 @@ acceptance test with ministry members.
 | Music deletion | Archive; permanent delete only when unused |
 | Plan duplication | Copies items, not event links |
 | Bulk download | Per plan by default; whole library on request with size shown |
-| Conflict default | None: the member always chooses |
+| Offline editing | Not included (view-only offline) |
 | Realtime editing | Not included |
 | Multi-church support | Not included |
 
@@ -691,9 +687,9 @@ The release is successful when ministry members can, without an account:
 1. Open Setlist on their phone and find a song.
 2. View its sheet.
 3. Create a plan for a service and reorder its songs.
-4. Make the plan available offline.
-5. Open the plan and every sheet at church with no internet.
-6. Edit a plan offline and see it sync later without losing anyone's changes.
+4. Share the plan's link with the team.
+5. Make the plan available offline.
+6. Open the plan and every sheet at church with no internet.
 
 And an administrator can keep the library up to date from any browser.
 

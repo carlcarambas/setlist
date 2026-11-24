@@ -8,6 +8,7 @@ import { LocalSkeleton, NotOnDevice, OnlineOnly } from "@/components/local/state
 import { KeepOffline } from "@/components/offline/keep-offline";
 import { ArchivePlanButton, DeletePlanButton, DuplicatePlanButton } from "@/components/plans/plan-actions";
 import { PlanSongs } from "@/components/plans/plan-songs";
+import { SharePlanButton } from "@/components/plans/share-plan-button";
 import { PlanStatusBadge, relativeTime } from "@/components/plans/plan-status";
 import { Button } from "@/components/ui/button";
 import { formatEventDate } from "@/features/events/schemas";
@@ -68,21 +69,24 @@ export function PlanView() {
           </p>
           {plan.description ? <p className="max-w-prose pt-1 whitespace-pre-line">{plan.description}</p> : null}
         </div>
-        <OnlineOnly label="Editing needs a connection">
-          <div className="flex flex-wrap gap-2">
-            {!archived ? (
-              <Button asChild className="h-11 gap-2">
-                <Link href={`/plans/${plan.id}/edit`}>
-                  <Pencil className="size-4" aria-hidden />
-                  Edit
-                </Link>
-              </Button>
-            ) : null}
-            <DuplicatePlanButton planId={plan.id} />
-            <ArchivePlanButton planId={plan.id} archived={archived} />
-            {isAdmin ? <DeletePlanButton planId={plan.id} title={plan.title} /> : null}
-          </div>
-        </OnlineOnly>
+        <div className="flex flex-wrap items-start gap-2">
+          <SharePlanButton planId={plan.id} title={plan.title} />
+          <OnlineOnly label="Editing needs a connection">
+            <div className="flex flex-wrap gap-2">
+              {!archived ? (
+                <Button asChild className="h-11 gap-2">
+                  <Link href={`/plans/${plan.id}/edit`}>
+                    <Pencil className="size-4" aria-hidden />
+                    Edit
+                  </Link>
+                </Button>
+              ) : null}
+              <DuplicatePlanButton planId={plan.id} />
+              <ArchivePlanButton planId={plan.id} archived={archived} />
+              {isAdmin ? <DeletePlanButton planId={plan.id} title={plan.title} /> : null}
+            </div>
+          </OnlineOnly>
+        </div>
       </div>
 
       {events.length ? (

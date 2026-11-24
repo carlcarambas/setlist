@@ -4,7 +4,7 @@ Music ministry planning: a shared PDF music library, setlists (plans) and events
 without an account; administrators sign in to manage the library.
 One responsive web app for desktop and mobile, installable from the browser.
 
-- **Requirements:** [`spec.md`](spec.md) v2.0 (offline-first, no member login) is the source of truth.
+- **Requirements:** [`spec.md`](spec.md) v2.1 (no member login; offline is view-only) is the source of truth.
   v1.0 is kept at [`docs/spec-v1.md`](docs/spec-v1.md); the migration rationale is in
   [`docs/offline-first-assessment.md`](docs/offline-first-assessment.md).
 - **Technical plan:** [`docs/implementation-plan.md`](docs/implementation-plan.md) covers schema, RLS, milestones and cost notes.
@@ -26,8 +26,8 @@ Storage) · Railway.
 | 6 | Access model: no member login (anonymous devices + bot check), admin-only library, sharing removed | Done (not deployed) |
 | 7 | Local data and offline app shell: pages read from the device, background sync, precached app | Done (not deployed) |
 | 8 | Offline sheets: Keep offline per plan (self-updating), per-sheet saving, badges, storage panel, install hint | Done (not deployed) |
-| 9 | Offline editing and sync | Next |
-| 10 | Hardening and launch | Planned |
+| 9 | Share a plan's link; offline stays view-only (spec 2.1) | Done (not deployed) |
+| 10 | Hardening and launch | Next |
 
 ## Local setup
 
