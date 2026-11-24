@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { adminNav, isActive, primaryNav, settingsNav, type NavItem } from "./nav-items";
 
-function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
+function NavLink({ item, pathname }: { item: NavItem; pathname: string | null }) {
   const { href, label, icon: Icon } = item;
-  const active = isActive(pathname, href);
+  const active = pathname !== null && isActive(pathname, href);
   return (
     <Link
       href={href}
@@ -23,9 +23,13 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
   );
 }
 
+/** Sidebar with the current page highlighted. Render inside <Suspense> with `SidebarNavLinks` as fallback. */
 export function SidebarNav({ isAdmin }: { isAdmin: boolean }) {
-  const pathname = usePathname();
+  return <SidebarNavLinks isAdmin={isAdmin} pathname={usePathname()} />;
+}
 
+/** The same links without reading the URL, so it can be part of the static page shell. */
+export function SidebarNavLinks({ isAdmin, pathname = null }: { isAdmin: boolean; pathname?: string | null }) {
   return (
     <nav aria-label="Main" className="flex flex-col gap-1 px-3">
       {primaryNav.map((item) => (

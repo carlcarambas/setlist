@@ -5,9 +5,13 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { isActive, mobileLabels, primaryNav } from "./nav-items";
 
+/** Tab bar with the current page highlighted. Render inside <Suspense> with `MobileTabBarLinks` as fallback. */
 export function MobileTabBar() {
-  const pathname = usePathname();
+  return <MobileTabBarLinks pathname={usePathname()} />;
+}
 
+/** The same tabs without reading the URL, so it can be part of the static page shell. */
+export function MobileTabBarLinks({ pathname = null }: { pathname?: string | null }) {
   return (
     <nav
       aria-label="Main"
@@ -15,7 +19,7 @@ export function MobileTabBar() {
     >
       <ul className="grid grid-cols-5">
         {primaryNav.map(({ href, label, icon: Icon }) => {
-          const active = isActive(pathname, href);
+          const active = pathname !== null && isActive(pathname, href);
           return (
             <li key={href}>
               <Link

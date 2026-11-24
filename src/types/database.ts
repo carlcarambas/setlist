@@ -43,6 +43,58 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"arrangements": {
+                  Row: {
+                    "bpm": number | null,"content_sha256": string | null,"created_at": string,"file_size_bytes": number,"id": string,"instrument_notes": string | null,"mime_type": string,"music_piece_id": string,"musical_key": string | null,"original_filename": string,"status": Database["public"]['Enums']["arrangement_status"],"storage_path": string,"title": string,"updated_at": string,"uploaded_by": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "bpm"?: number | null,"content_sha256"?: string | null,"created_at"?: string,"file_size_bytes": number,"id"?: string,"instrument_notes"?: string | null,"mime_type": string,"music_piece_id": string,"musical_key"?: string | null,"original_filename": string,"status"?: Database["public"]['Enums']["arrangement_status"],"storage_path": string,"title": string,"updated_at"?: string,"uploaded_by"?: string
+                  }
+                  Update: {
+                    "bpm"?: number | null,"content_sha256"?: string | null,"created_at"?: string,"file_size_bytes"?: number,"id"?: string,"instrument_notes"?: string | null,"mime_type"?: string,"music_piece_id"?: string,"musical_key"?: string | null,"original_filename"?: string,"status"?: Database["public"]['Enums']["arrangement_status"],"storage_path"?: string,"title"?: string,"updated_at"?: string,"uploaded_by"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "arrangements_music_piece_id_fkey"
+      columns: ["music_piece_id"]
+isOneToOne: false
+      referencedRelation: "music_pieces"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "arrangements_uploaded_by_fkey"
+      columns: ["uploaded_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"music_pieces": {
+                  Row: {
+                    "category": string | null,"composer": string | null,"created_at": string,"created_by": string,"description": string | null,"id": string,"status": Database["public"]['Enums']["content_status"],"tags": (string)[],"title": string,"updated_at": string,"updated_by": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "category"?: string | null,"composer"?: string | null,"created_at"?: string,"created_by"?: string,"description"?: string | null,"id"?: string,"status"?: Database["public"]['Enums']["content_status"],"tags"?: (string)[],"title": string,"updated_at"?: string,"updated_by"?: string
+                  }
+                  Update: {
+                    "category"?: string | null,"composer"?: string | null,"created_at"?: string,"created_by"?: string,"description"?: string | null,"id"?: string,"status"?: Database["public"]['Enums']["content_status"],"tags"?: (string)[],"title"?: string,"updated_at"?: string,"updated_by"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "music_pieces_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "music_pieces_updated_by_fkey"
+      columns: ["updated_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"profiles": {
                   Row: {
                     "created_at": string,"display_name": string,"email": string,"id": string,"role": Database["public"]['Enums']["member_role"],"status": Database["public"]['Enums']["member_status"],"updated_at": string
@@ -63,8 +115,16 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "complete_invitation":
+            "can_upload_sheet":
+{ Args: { "p_name": string }; Returns: boolean
+                           },
+"complete_invitation":
 { Args: { "p_display_name": string }; Returns: undefined
+                           },
+"find_possible_duplicates":
+{ Args: { "p_sha256": string,"p_title": string }; Returns: {
+              "music_piece_id": string,"reason": string,"title": string
+            }[]
                            },
 "is_active_member":
 { Args: Record<PropertyKey, never>; Returns: boolean
@@ -72,12 +132,15 @@ isOneToOne: false
 "is_admin":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
+"music_categories":
+{ Args: Record<PropertyKey, never>; Returns: string[]
+                           },
 "set_member_status":
 { Args: { "p_status": Database["public"]['Enums']["member_status"],"p_user_id": string }; Returns: undefined
                            }
           }
           Enums: {
-            "member_role": "member"|"admin","member_status": "invited"|"active"|"inactive"
+            "arrangement_status": "pending"|"active"|"archived","content_status": "active"|"archived","member_role": "member"|"admin","member_status": "invited"|"active"|"inactive"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -197,7 +260,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "member_role": ["member", "admin"],"member_status": ["invited", "active", "inactive"]
+            "arrangement_status": ["pending", "active", "archived"],"content_status": ["active", "archived"],"member_role": ["member", "admin"],"member_status": ["invited", "active", "inactive"]
           }
         }
 } as const

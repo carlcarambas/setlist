@@ -16,8 +16,9 @@ Storage) · Netlify.
 |---|---|---|
 | 0 | Foundation: app shell, Supabase helpers, tooling, deploy | Done |
 | 1 | Auth and membership: sign-in, password reset, invitations, member admin | Done |
-| 2 | Music library | Next |
-| 3–6 | Plans, sharing, events, hardening | Planned |
+| 2 | Music library: PDF upload with server-side checks, search, arrangements, viewer | Done |
+| 3 | Plans and plan editor, offline viewing | Next |
+| 4–6 | Sharing, events, hardening | Planned |
 
 ## Local setup
 
@@ -172,4 +173,7 @@ See [`.env.example`](.env.example).
 - RLS is enabled on every table; `npm run test:db` fails if a table in `public` doesn't have it.
 - `src/lib/supabase/admin.ts` (secret key) imports `server-only`; importing it from client code fails the
   build.
+- PDF sheets live in the private `music-sheets` bucket. Browsers upload straight to Storage with a one-time
+  signed URL; the server then checks the stored bytes before a sheet becomes visible. Members can't approve
+  their own uploads.
 - Never commit `.env*` files except `.env.example`, and never put real member data in `seed.sql`.

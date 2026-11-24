@@ -9,7 +9,9 @@ import type { Database } from "@/types/database";
  * Allowed uses only (docs/implementation-plan.md §4.6):
  *   1. Resolving public share links
  *   2. Administrator member actions (invite, ban/unban)
- *   3. Storage cleanup
+ *   3. Upload finalization: checking stored PDF bytes and activating/replacing a sheet
+ *      (members can't approve their own uploads)
+ *   4. Storage cleanup
  * Everything else must use the user-scoped client from ./server.
  */
 export function createAdminClient() {

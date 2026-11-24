@@ -3,8 +3,8 @@ import Link from "next/link";
 import { Settings } from "lucide-react";
 import { Brand } from "@/components/layout/brand";
 import { MemberMenu } from "@/components/layout/member-menu";
-import { MobileTabBar } from "@/components/layout/mobile-tab-bar";
-import { SidebarNav } from "@/components/layout/sidebar-nav";
+import { MobileTabBar, MobileTabBarLinks } from "@/components/layout/mobile-tab-bar";
+import { SidebarNav, SidebarNavLinks } from "@/components/layout/sidebar-nav";
 import { requireActiveMember } from "@/lib/auth/member";
 
 // Only active members get past these components; RLS enforces the same rule on the data.
@@ -48,7 +48,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="px-6">
           <Brand />
         </div>
-        <Suspense fallback={<SidebarNav isAdmin={false} />}>
+        <Suspense fallback={<SidebarNavLinks isAdmin={false} />}>
           <MemberSidebar />
         </Suspense>
       </aside>
@@ -72,7 +72,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </main>
       </div>
 
-      <MobileTabBar />
+      <Suspense fallback={<MobileTabBarLinks />}>
+        <MobileTabBar />
+      </Suspense>
     </div>
   );
 }

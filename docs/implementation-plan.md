@@ -463,6 +463,18 @@ running local app.
 - Music details page with a lazy `react-pdf` viewer (full width on mobile) and download via
   `/api/sheets/:id?download=1`.
 
+**Milestone 2 notes (as built):**
+- React Hook Form isn't used after all. The upload form needs custom client logic (hashing, direct upload,
+  server check) that RHF wouldn't simplify, and the other forms are small. Zod validates on both sides.
+- Members can't set an arrangement's status or file columns: column grants plus a trigger mean only the
+  server (secret key) moves a sheet out of `pending` or points it at a new file. The secret key's allowed
+  uses now include upload finalization (documented in `src/lib/supabase/admin.ts`).
+- Download filenames are added to the signed URL by the app, because the Supabase client's `download`
+  option encodes them twice.
+- Known gap: if a browser closes in the middle of *replacing* a PDF, the new file can be left in Storage
+  with nothing pointing to it. It wastes a little space but is harmless; a storage sweep is planned for
+  Milestone 6.
+
 ### Milestone 3 — Plans and plan editor
 - Migration: `plans`, `plan_items`, `plan_activities`, the `plans_guard` trigger, and the versioned functions,
   plus pgTAP tests (including the cross-user and conflict cases).
