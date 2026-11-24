@@ -58,7 +58,7 @@ async function Sheet({ params }: Pick<Props, "params">) {
           </a>
         </Button>
       </div>
-      <SheetViewer url={url} title={title} />
+      <SheetViewer file={url} title={title} />
     </>
   );
 }

@@ -503,6 +503,22 @@ running local app.
   - Cost: sheets are downloaded once per device per version, which adds Supabase egress roughly
     proportional to plans opened. Still well within the free tier at this ministry's size.
 
+**Milestone 3 notes (as built):**
+- Plan reads and writes go through RLS; every edit goes through a `SECURITY INVOKER` function that
+  locks the plan row, checks access and (for reorder, title/description and notes) the expected
+  version. Errors use PostgREST `PTxxx` codes (404/403/409/422/423).
+- The plan read policy checks `owner_id` on the row as well as `can_view_plan()`, because the helper
+  can't see a row inside its own `INSERT … RETURNING`.
+- The editor runs edits one at a time in a queue, updates the screen immediately, and rolls back on
+  failure. A version conflict stops editing and asks for a reload, without overwriting.
+- Drag and drop works with mouse, touch (drag handle) and keyboard, with spoken announcements that
+  use song names.
+- Offline (spec P9): `public/sw.js` keeps app code and the offline page; the plan page saves its own
+  HTML, its sheets, the PDF viewer code and every script it loaded. Two pitfalls found in testing:
+  files the browser serves from its memory cache never reach the service worker, and two separate
+  `import()` calls of the same module can be split into different chunks. Both are handled.
+- Sign-out removes plan pages, sheets and the saved-plans list; app code and the offline page stay.
+
 ### Milestone 4 — Sharing
 - Migration: `plan_shares`, `plan_links`, plus pgTAP tests (including the anonymous role having zero access).
 - Share dialog:

@@ -16,6 +16,18 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  async headers() {
+    return [
+      {
+        // The service worker must always be fresh so updates reach every device.
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+        ],
+      },
+    ];
+  },
   async redirects() {
     return [{ source: "/", destination: "/dashboard", permanent: false }];
   },

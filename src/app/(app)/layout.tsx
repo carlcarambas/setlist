@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Settings } from "lucide-react";
 import { Brand } from "@/components/layout/brand";
 import { MemberMenu } from "@/components/layout/member-menu";
+import { OfflineBanner } from "@/components/offline/offline-banner";
 import { MobileTabBar, MobileTabBarLinks } from "@/components/layout/mobile-tab-bar";
 import { SidebarNav, SidebarNavLinks } from "@/components/layout/sidebar-nav";
 import { requireActiveMember } from "@/lib/auth/member";
@@ -65,6 +66,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </Link>
         </header>
 
+        <OfflineBanner />
         <main id="main" className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-24 md:px-8 md:pb-10">
           <Suspense fallback={<ContentSkeleton />}>
             <ActiveMemberContent>{children}</ActiveMemberContent>

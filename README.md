@@ -17,8 +17,9 @@ Storage) · Netlify.
 | 0 | Foundation: app shell, Supabase helpers, tooling, deploy | Done |
 | 1 | Auth and membership: sign-in, password reset, invitations, member admin | Done |
 | 2 | Music library: PDF upload with server-side checks, search, arrangements, viewer | Done |
-| 3 | Plans and plan editor, offline viewing | Next |
-| 4–6 | Sharing, events, hardening | Planned |
+| 3 | Plans: editor with drag and drop, autosave, conflict protection; offline viewing | Done (not deployed) |
+| 4 | Sharing and collaboration | Next |
+| 5–6 | Events, dashboard, hardening | Planned |
 
 ## Local setup
 
@@ -61,6 +62,28 @@ running (for the local Supabase stack).
 
 Local Supabase Studio runs at http://127.0.0.1:54323, and emails sent locally (invites, resets) appear in
 Mailpit at http://127.0.0.1:54324.
+
+## Testing offline mode locally
+
+The service worker only runs in a production build (in development it would serve stale code).
+
+1. Build:
+
+   ```bash
+   npm run build
+   ```
+
+2. Start the production server:
+
+   ```bash
+   npm start
+   ```
+
+3. Sign in, open a plan once, and wait for "Available offline on this device".
+4. Stop the server (or turn on airplane mode). Reload the plan: it still opens, and its sheets open from
+   the device. Other pages show the offline page with the list of saved plans.
+
+To start over, unregister the service worker and clear site data in the browser's developer tools.
 
 ## Scripts
 

@@ -12,7 +12,7 @@ import type { Database } from "@/types/database";
  */
 
 // Reachable without a session. Everything else requires one.
-const PUBLIC_PREFIXES = ["/sign-in", "/reset-password", "/auth/"];
+const PUBLIC_PREFIXES = ["/sign-in", "/reset-password", "/auth/", "/offline"];
 
 function isPublic(pathname: string) {
   return PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix));

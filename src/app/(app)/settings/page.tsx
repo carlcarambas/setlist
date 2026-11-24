@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
-import { LogOut } from "lucide-react";
 import { ProfileForm } from "@/components/admin/forms";
 import { adminNav } from "@/components/layout/nav-items";
 import { PageHeader } from "@/components/layout/page-header";
+import { SignOutButton } from "@/components/offline/sign-out-button";
 import { SectionSkeleton } from "@/components/layout/section-skeleton";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { signOut } from "@/features/auth/actions";
 import { requireActiveMember } from "@/lib/auth/member";
 
 export const metadata: Metadata = { title: "Settings" };
@@ -70,12 +68,9 @@ async function SettingsContent() {
           </Card>
         ) : null}
 
-        <form action={signOut} className="md:hidden">
-          <Button type="submit" variant="outline" className="h-11 w-full gap-2">
-            <LogOut className="size-4" aria-hidden />
-            Sign out
-          </Button>
-        </form>
+        <div className="md:hidden">
+          <SignOutButton variant="outline" className="w-full justify-center" />
+        </div>
       </div>
     </>
   );
