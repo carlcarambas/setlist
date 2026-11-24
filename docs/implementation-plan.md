@@ -1,5 +1,9 @@
 # Setlist — Initial Technical Plan (for approval)
 
+> **Note (2026-11-24):** this plan was written for spec v1.0 and covers Milestones 0–5 as built. Spec v2.0
+> (offline-first, no member login) replaced v1.0; its milestones 6–10 get their own plans. Where this
+> document and `spec.md` v2.0 disagree, `spec.md` wins.
+
 **Status:** Proposal. No application code has been written.
 **Source of truth:** [`spec.md`](../spec.md) v1.0 (2026-11-22). Anything here that differs from the spec is
 listed under [§8 Proposed spec changes](#8-proposed-spec-changes) and is not applied until approved.

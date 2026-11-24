@@ -1,77 +1,84 @@
 # Setlist — Music Ministry Planning Platform
 ## Product Requirements & Technical Specification
 
-**Document status:** Initial implementation baseline  
-**Version:** 1.0  
-**Date:** 2026-11-22  
+**Document status:** Approved baseline (2026-11-24). Replaces v1.0, kept at [`docs/spec-v1.md`](docs/spec-v1.md).  
+**Version:** 2.0 (offline-first)  
+**Date:** 2026-11-24  
 **Product name:** Setlist (working name)  
-**Primary platform:** Responsive web application  
+**Primary platform:** Installable Progressive Web App (desktop, tablet, mobile)  
 **Initial organization model:** One church / one music ministry  
-**Primary users:** Music ministry members and administrators
+**Primary users:** Music ministry members (no login) and administrators (login)
+
+**What changed from v1.0:**
+- Members no longer sign in; only administrators do.
+- The app must work offline on each device.
+- Only administrators change the music library.
+- Everyone can view and edit every plan, so member sharing and public links are removed.
+- v1.0 amendments P1–P9 are folded into the text below where they still apply.
+- Rationale: [`docs/offline-first-assessment.md`](docs/offline-first-assessment.md).
 
 ---
 
 ## 1. Product Summary
 
-Setlist is a collaborative web application for a church music ministry. It centralizes PDF music sheets and enables members to create multiple music plans (setlists), associate plans with church events, reorder songs, and share plans with other members or through shareable links.
+Setlist is a web application for a church music ministry. It keeps the ministry's PDF music sheets in one
+library and lets members build music plans (setlists), reorder songs, and link plans to church events.
+It works **without an internet connection** on any device where it was used before. Members don't need
+an account; administrators sign in to manage the library.
 
 ### 1.1 Product vision
 
-> Plan the music. Share the setlist. Serve together.
+> Plan the music. Share the setlist. Serve together. Even offline.
 
 ### 1.2 Goals
 
-1. Maintain one searchable, shared music library.
-2. Let every active member upload and manage music entries.
-3. Let members create multiple plans and events.
-4. Make it easy to search for songs, select an arrangement, and add it to a plan.
-5. Support drag-and-drop reordering.
-6. Let plan owners share plans with registered members or through links.
-7. Support collaborative editing for members who have edit access.
-8. Make music sheets accessible on desktop, tablet, and mobile browsers.
-9. Keep infrastructure and maintenance costs low for a solo developer.
+1. Maintain one searchable music library, curated by administrators.
+2. Let anyone in the ministry open Setlist, find songs and view sheets without signing in.
+3. Let members create, edit and reorder plans, together, with no accounts.
+4. Keep plans and downloaded sheets usable with no internet connection.
+5. Sync offline changes automatically and never lose a member's edit silently.
+6. Work on desktop, tablet and mobile browsers from one installable app.
+7. Keep infrastructure and maintenance costs low for a solo developer.
 
-### 1.3 Non-goals for the MVP
+### 1.3 Non-goals
 
-Do not implement these unless the core MVP is complete:
+Do not implement these unless explicitly approved:
 
 - Native iOS or Android applications
+- A local church server, LAN sync or peer-to-peer sync between devices
+- Member accounts, a shared ministry password, or credentials in client code
+- Per-plan sharing, permissions or public share links
 - Multi-church tenant administration
-- Musician or instrument assignment
-- Rehearsal scheduling
-- Chat, comments, or discussion threads
-- Push notifications
+- Musician or instrument assignment, rehearsal scheduling
+- Chat, comments, push notifications
 - Real-time multiplayer editing / live cursors
-- Chord transposition or automatic chord recognition
-- AI song recommendations
-- Automatic sheet music generation
+- Automatic item-level merging of conflicting plan edits
+- Chord transposition, AI recommendations, sheet music generation
 - Payments or subscriptions
 
 ---
 
 ## 2. Product Decisions
 
-These decisions are confirmed and should be treated as requirements:
+These decisions are confirmed and are requirements:
 
 | Area | Decision |
 |---|---|
 | Organization scope | Single church / music ministry |
-| Registration | Invitation-based membership is preferred |
-| Music library | All active members can upload and manage music |
-| Music format | PDF for MVP |
-| Plans | Members can create multiple plans |
-| Plan editing | All members who have access with Editor permission can edit |
-| Sharing | Both registered-member sharing and shareable links |
-| Link access | View-only by default |
-| Platform | Responsive web application |
-| Initial budget | Minimize recurring costs; use free tiers during development |
-| Architecture | Simple modular application; avoid microservices |
-
-### 2.1 Important access distinction
-
-"All members can edit plans" means all members explicitly granted access as Editors can edit a shared plan. It does **not** mean every registered member automatically has access to every private plan.
-
-The plan owner can grant Viewer or Editor access. The owner retains ownership and control of sharing.
+| Member access | No login. Each device gets an anonymous identity automatically |
+| Administrator access | Email + password login; administrators are invited by another administrator |
+| Library reachability | Publicly reachable by anyone with the address; protected against bots, not hidden (D3) |
+| Music library changes | Administrators only (upload, replace, archive, delete, metadata) |
+| Music format | PDF |
+| Plans | Everyone can view, create, edit, reorder and archive every plan (D1) |
+| Plan deletion | Anyone archives; only administrators permanently delete (D4) |
+| Events | Kept. Viewable offline; created and edited online by anyone; deleted by administrators (D2) |
+| Attribution | Optional display name per device, shown in plan activity (D5) |
+| Offline | Per device only. App shell, library metadata, plans and downloaded sheets work offline |
+| Sync | Automatic when online, retried on app start; conflicts are resolved by the member, never silently |
+| Platform | Installable PWA, one codebase |
+| Budget | Free tiers during development; low recurring production cost |
+| Architecture | Simple modular application; no microservices |
 
 ---
 
@@ -79,375 +86,306 @@ The plan owner can grant Viewer or Editor access. The owner retains ownership an
 
 ### 3.1 User types
 
-**Member**
-- Can access the shared music library.
-- Can upload music and arrangements.
-- Can edit music metadata and archive music.
-- Can create multiple plans and events.
-- Owns plans they create.
-- Can view or edit plans shared with them according to their permission.
+**Member (anonymous device)**
+- Opens Setlist with no sign-in. On first online visit, the app creates an anonymous identity for the
+  device in the background.
+- Browses and searches the library; views and downloads sheets.
+- Views, creates, edits, reorders and archives any plan; duplicates plans.
+- Views events; creates and edits events while online; attaches plans to events while online.
+- Can set an optional display name for this device.
+- Works offline with everything previously synced or downloaded on this device.
 
 **Administrator**
-- Has all member capabilities.
-- Can invite, activate, deactivate, and manage members.
-- Can manage application-level settings.
-- Can perform administrative recovery actions when necessary.
-- Does not automatically become the owner of every plan.
+- Signs in with email and password.
+- Has every member capability.
+- Uploads, replaces, archives, restores and permanently deletes music pieces and arrangements; edits
+  library metadata.
+- Permanently deletes plans and events; restores archived plans.
+- Invites, deactivates and reactivates administrator accounts.
+- Manages application settings (church name, timezone, upload limit).
+- Can block a misbehaving device identity (Should).
 
-### 3.2 Plan-level permissions
+### 3.2 Capability matrix
 
-| Capability | Owner | Editor | Viewer | Public link viewer |
-|---|---:|---:|---:|---:|
-| View plan | Yes | Yes | Yes | Yes |
-| View referenced music sheets | Yes | Yes | Yes | Yes |
-| Add songs | Yes | Yes | No | No |
-| Remove songs | Yes | Yes | No | No |
-| Reorder songs | Yes | Yes | No | No |
-| Edit plan title/description | Yes | Yes | No | No |
-| Manage member shares | Yes | No | No | No |
-| Create/revoke public links | Yes | No | No | No |
-| Delete/archive plan | Yes | No | No | No |
+| Capability | Member | Administrator | Offline? |
+|---|---:|---:|---:|
+| Browse/search library, view sheets | Yes | Yes | Yes (synced metadata, downloaded sheets) |
+| Download sheets for offline use | Yes | Yes | No (needs a connection) |
+| Upload, replace, archive, delete music; edit metadata | No | Yes | No |
+| View plans | Yes | Yes | Yes |
+| Create, edit, reorder plans; edit item notes | Yes | Yes | Yes (queued) |
+| Duplicate plan | Yes | Yes | Yes (queued) |
+| Archive / restore plan | Yes | Yes | Yes (queued) |
+| Permanently delete plan | No | Yes | No |
+| View events | Yes | Yes | Yes (read-only) |
+| Create/edit events, attach/detach plans | Yes | Yes | No |
+| Delete events | No | Yes | No |
+| Manage administrators and settings | No | Yes | No |
 
-An administrator may have a documented recovery override, but normal access should still be enforced through resource-level authorization.
+### 3.3 Administrator lifecycle
 
-### 3.3 Membership lifecycle
-
-- New users should join through an invitation or administrator-approved process.
-- Only active members can sign in and access protected resources.
-- Deactivated members must lose access, including access through previously issued public or private sessions where feasible.
-- Existing records created by a deactivated user must remain intact.
-- Never hard-delete user records merely because membership is deactivated.
+- Administrators join only by invitation from an existing administrator. The first administrator is
+  created through a documented setup step.
+- Deactivated administrators lose administrator access immediately for data (RLS checks status on
+  every query) and cannot sign in again. Their device continues as an ordinary member.
+- An administrator cannot deactivate themselves; at least one active administrator must remain.
+- Records created by a deactivated administrator remain intact.
 
 ---
 
 ## 4. Functional Requirements
 
-Priority definitions:
-- **Must:** Required for MVP.
-- **Should:** Important but can follow the first usable release.
-- **Could:** Optional enhancement.
+Priority: **Must** = required for release; **Should** = important, may follow; **Could** = optional.
 
-### 4.1 Authentication and membership
+### 4.1 Access and administrator accounts
 
 | ID | Requirement | Priority |
 |---|---|---|
-| AUTH-01 | Users can sign in securely | Must |
-| AUTH-02 | Users can sign out | Must |
-| AUTH-03 | Users can reset forgotten passwords | Must |
-| AUTH-04 | Users can view and update their profile | Should |
-| AUTH-05 | Administrators can invite members | Must |
-| AUTH-06 | Administrators can activate/deactivate members | Must |
-| AUTH-07 | Unauthorized users cannot access private application pages or data | Must |
+| ACC-01 | Members use Setlist with no sign-in, online and offline | Must |
+| ACC-02 | Each device gets an anonymous identity automatically on first online use | Must |
+| ACC-03 | Anonymous identity creation is protected by a CAPTCHA and rate limits | Must |
+| ACC-04 | Members can set an optional device display name | Should |
+| ACC-05 | Administrators sign in and sign out | Must |
+| ACC-06 | Administrators reset forgotten passwords | Must |
+| ACC-07 | Administrators invite, deactivate and reactivate administrators | Must |
+| ACC-08 | Library changes and admin pages are refused to non-administrators, on the server and in the database | Must |
+| ACC-09 | Administrators can block a device identity | Should |
+| ACC-10 | No shared password; no secret or privileged key in client code | Must |
 
-Use managed authentication. Do not build password storage or authentication cryptography from scratch.
+Use managed authentication (Supabase Auth, including its anonymous sign-ins). Do not build password
+storage or authentication cryptography.
+
+When an administrator signs out on a device, the device returns to being an anonymous member and keeps
+its offline data.
 
 ### 4.2 Music library
 
 | ID | Requirement | Priority |
 |---|---|---|
-| LIB-01 | Active members can upload PDF music sheets | Must |
+| LIB-01 | Administrators upload PDF music sheets | Must |
 | LIB-02 | Music title is required | Must |
-| LIB-03 | Members can search by title | Must |
-| LIB-04 | Members can view music details | Must |
-| LIB-05 | Members can preview PDFs in the browser | Must |
-| LIB-06 | Members can download PDFs | Must |
-| LIB-07 | Members can edit music metadata | Must |
-| LIB-08 | Members can archive music | Must |
+| LIB-03 | Everyone can search by title, online and offline | Must |
+| LIB-04 | Everyone can view music details | Must |
+| LIB-05 | Everyone can view PDFs in the app | Must |
+| LIB-06 | Everyone can download PDFs (to the device and as a file) | Must |
+| LIB-07 | Administrators edit music metadata | Must |
+| LIB-08 | Administrators archive and restore music | Must |
 | LIB-09 | A music piece can have multiple arrangements | Must |
-| LIB-10 | An arrangement can specify a musical key | Should |
-| LIB-11 | An arrangement can specify an instrument/arrangement description | Should |
-| LIB-12 | Members can filter by category or tags | Should |
-| LIB-13 | System detects possible duplicate uploads | Should |
-| LIB-14 | System records uploader and timestamps | Must |
-| LIB-15 | Members can replace an arrangement PDF without silently breaking existing references | Should |
+| LIB-10 | An arrangement can specify a musical key and BPM | Should |
+| LIB-11 | An arrangement can have instrument/arrangement notes | Should |
+| LIB-12 | Everyone can filter by category or tags | Should |
+| LIB-13 | Possible duplicate uploads are flagged to the administrator | Should |
+| LIB-14 | Uploader and timestamps are recorded | Must |
+| LIB-15 | Administrators replace an arrangement PDF without breaking plans that use it | Should |
+| LIB-16 | Administrators permanently delete music that no plan uses | Could |
 
-#### Music piece vs. arrangement
+**Music piece vs. arrangement.** A `MusicPiece` is the song; an `Arrangement` is one specific sheet of it
+(for example "Amazing Grace — Key of G"). A plan item references an arrangement.
 
-A `MusicPiece` represents the song itself. An `Arrangement` represents a specific sheet/version of that song.
+**Music piece fields:** title; composer/artist; description; category; tags; status (active, archived);
+created by/at; updated by/at.
 
-Example:
+**Arrangement fields:** music piece; title; musical key; BPM; notes; private storage path; original
+filename; file size; MIME type; content SHA-256; file version (changes on replacement); status (pending,
+active, archived); uploaded by/at; updated at.
 
-**Amazing Grace**
-- Original arrangement — Key of G
-- Transposed arrangement — Key of C
-- Guitar chord sheet
-- Vocal arrangement
+**Library rules**
+- Prefer archive over deletion. Music used by any plan must not be permanently deleted.
+- Archived music stays readable inside existing plans but can't be added to plans.
+- Replacing a PDF keeps the arrangement's identity and changes its file version.
+- Uploads go directly from the browser to private storage through a server-issued signed upload URL.
+  The server then checks the stored bytes (`%PDF-` header, `%%EOF` trailer, size limit) before
+  activating the arrangement. Unchecked uploads stay `pending` and are cleaned up.
+- Upload size limit is configurable (default 20 MB).
 
-A plan item must reference a specific arrangement, not merely the general music piece.
-
-#### Music metadata
-
-Music piece:
-- Title
-- Composer / artist (optional)
-- Description (optional)
-- Category (optional)
-- Tags (optional)
-- Status: active or archived
-- Created by
-- Created at
-- Updated by
-- Updated at
-
-Arrangement:
-- Music piece ID
-- Arrangement title
-- Musical key (optional)
-- BPM (optional)
-- Instrument / arrangement notes (optional)
-- Private storage object key
-- Original filename
-- File size and MIME type
-- Uploaded by
-- Uploaded at
-- Status
-
-#### Library rules
-
-- All active members can upload and edit metadata.
-- Prefer archive over permanent deletion.
-- A music piece or arrangement referenced by a plan must not be hard-deleted through normal UI actions.
-- Replacing a PDF should not change the identity of the arrangement unexpectedly.
-- Validate uploaded content. Do not trust the filename or browser-provided MIME type alone.
-- Set a configurable upload-size limit appropriate for PDF sheet music (initial default: 20 MB; make configurable).
-
-### 4.3 Plan / setlist management
+### 4.3 Plans
 
 | ID | Requirement | Priority |
 |---|---|---|
-| PLAN-01 | Members can create multiple plans | Must |
+| PLAN-01 | Everyone can create multiple plans, online or offline | Must |
 | PLAN-02 | Plan title is required | Must |
 | PLAN-03 | Plan description is optional | Should |
-| PLAN-04 | Members can search the music library from the plan editor | Must |
-| PLAN-05 | Members can add a selected arrangement to a plan | Must |
-| PLAN-06 | Members can remove a plan item | Must |
-| PLAN-07 | Members can reorder items using drag and drop | Must |
-| PLAN-08 | Members can open/preview the selected sheet from the plan | Must |
-| PLAN-09 | Plans save changes reliably | Must |
-| PLAN-10 | Members can duplicate a plan | Should |
-| PLAN-11 | Members can archive a plan | Should |
-| PLAN-12 | Members can add notes to a plan item | Should |
-| PLAN-13 | Members can see who last updated a plan | Should |
-| PLAN-14 | Plan activity is recorded for important changes | Should |
+| PLAN-04 | The plan editor can search the library (offline: synced metadata) | Must |
+| PLAN-05 | Add a selected arrangement to a plan | Must |
+| PLAN-06 | Remove a plan item | Must |
+| PLAN-07 | Reorder items with drag and drop (and an accessible alternative) | Must |
+| PLAN-08 | Open the selected sheet from the plan | Must |
+| PLAN-09 | Changes save on the device immediately and sync reliably | Must |
+| PLAN-10 | Duplicate a plan | Should |
+| PLAN-11 | Archive and restore a plan | Should |
+| PLAN-12 | Notes on a plan item | Should |
+| PLAN-13 | Show who (device display name) and when a plan was last updated | Should |
+| PLAN-14 | Record activity for important changes | Should |
 
-#### Plan fields
+**Plan fields:** id (generated on the device); title; description; status (draft, published, archived;
+`published` is a label only); version; created by/at; updated by/at; deleted at (administrator delete).
 
-- ID
-- Title
-- Description
-- Owner user ID
-- Status: draft, published, archived
-- Version number for concurrency protection
-- Created at / by
-- Updated at / by
+**Plan item fields:** id (generated on the device); plan; arrangement; position; notes; added by;
+created at; updated at; removed at (tombstone, so removals sync).
 
-A plan can exist without an event. A plan is private to its owner until shared.
+A plan can exist without an event. Every plan is visible to everyone.
 
-#### Plan item fields
+**Ordering rules**
+- Position determines the visible order. A reorder is saved as one change containing the full order.
+- The server verifies that every item belongs to the plan.
 
-- ID
-- Plan ID
-- Arrangement ID
-- Position (integer)
-- Notes (optional)
-- Added by
-- Created at
-- Updated at
-
-#### Ordering rules
-
-- Position determines the visible order.
-- Reordering must be persisted transactionally.
-- Reordering should use one server operation for the new ordered item IDs or positions.
-- The server must verify that every submitted item belongs to the plan.
-- Concurrent changes must not silently overwrite another member's changes.
-
-#### Autosave behavior
-
-- Save after a short debounce for text fields.
-- Add/remove/reorder actions should persist promptly.
-- Show clear save states: Saving, Saved, and Save failed.
-- On failure, preserve the user's unsaved input and provide retry.
-- Use a plan version or equivalent optimistic concurrency mechanism.
-- If a stale update is rejected, show a conflict message and allow refresh/retry; do not silently overwrite.
+**Save states.** Each plan shows one of: *Saved on this device*, *Syncing…*, *Synced*, *Waiting for
+connection*, *Sync failed — retrying*, *Needs your attention* (conflict). Unsynced input is never
+discarded.
 
 ### 4.4 Events
 
 | ID | Requirement | Priority |
 |---|---|---|
-| EVT-01 | Members can create events | Must |
+| EVT-01 | Members can create events (online) | Must |
 | EVT-02 | Event title is required | Must |
 | EVT-03 | Event date is required | Must |
 | EVT-04 | Event time is optional | Should |
-| EVT-05 | Members can add a description | Should |
-| EVT-06 | Members can associate multiple plans with an event | Must |
+| EVT-05 | Event description is optional | Should |
+| EVT-06 | An event can have multiple plans; a plan can belong to multiple events | Must |
 | EVT-07 | A plan can exist without an event | Must |
-| EVT-08 | Members can view upcoming and past events | Must |
-| EVT-09 | Members can duplicate an event | Could |
+| EVT-08 | Everyone can view upcoming and past events, including offline | Must |
+| EVT-09 | Duplicate an event | Could |
+| EVT-10 | Only administrators delete events; deleting removes only the associations | Must |
 
-Event fields:
-- ID
-- Title
-- Description
-- Event date
-- Start time (optional)
-- Created by
-- Created at
-- Updated at
+Event fields: id, title, description, event date, start time, created by/at, updated at. Dates are
+calendar dates in the church's configured timezone (`app_settings.timezone`, default `Asia/Manila`);
+"upcoming" and "past" are computed in that timezone, never the device's.
 
-Use a join table for event-plan associations. An event can have multiple plans, and a plan may be associated with more than one event if the product rules allow it. Removing an association must not delete either record.
+Creating or editing events and attaching plans require a connection. A plan created offline can be
+attached once it has synced.
 
-Use the church's configured timezone for event display and date interpretation. Initial default can be `Asia/Manila`, but store timestamps consistently and avoid relying on browser-local timezone.
-
-### 4.5 Sharing
+### 4.5 Offline use and sync
 
 | ID | Requirement | Priority |
 |---|---|---|
-| SHARE-01 | Owners can share a plan with registered members | Must |
-| SHARE-02 | Owners can assign Viewer or Editor permission | Must |
-| SHARE-03 | Owners can revoke a member's access | Must |
-| SHARE-04 | Owners can create a shareable link | Must |
-| SHARE-05 | Public links are view-only by default | Must |
-| SHARE-06 | Owners can revoke a link | Must |
-| SHARE-07 | Owners can optionally set link expiration | Should |
-| SHARE-08 | Public links expose only the selected plan and its referenced arrangements | Must |
-| SHARE-09 | Shared plans appear in the recipient's Shared with Me area | Must |
+| OFF-01 | Installable PWA (web app manifest + service worker) | Must |
+| OFF-02 | The app shell opens with no connection on any device where it was opened before | Must |
+| OFF-03 | Library metadata, plans and events are stored on the device (IndexedDB) and kept in sync | Must |
+| OFF-04 | Members can download a sheet, all sheets of a plan, or (Should) the whole library | Must |
+| OFF-05 | Every song, plan and sheet shows whether it is available offline | Must |
+| OFF-06 | Plans can be created and edited offline; changes are queued | Must |
+| OFF-07 | Queued changes sync automatically when the connection returns, on app start and on a retry timer | Must |
+| OFF-08 | Conflicting edits are detected and resolved by the member; nothing is overwritten silently | Must |
+| OFF-09 | Storage usage is shown; full storage and failed downloads are reported with a retry | Must |
+| OFF-10 | The app asks the browser for persistent storage and suggests installing on iOS | Should |
+| OFF-11 | Members can remove downloaded sheets and clear offline data, warned about unsynced changes | Should |
+| OFF-12 | A new app version is offered with "Reload to update" and never drops queued changes | Must |
 
-#### Share link security
+**What the device keeps**
+- App shell: every page needed for the member area, precached by the service worker.
+- Metadata: all active and archived music pieces and arrangements (no PDFs), all non-deleted plans and
+  items, events and event associations, app settings. A library of a few thousand songs is small.
+- Sheets: only the PDFs the member downloaded, or opened (opened sheets are kept), keyed by arrangement
+  and file version.
 
-- Generate cryptographically random, unguessable tokens.
-- Store only a hash of the token in the database.
-- Never use sequential IDs as public access tokens.
-- Allow the owner to revoke a link.
-- Check expiration and revocation on every public-link access.
-- Do not expose database credentials, private storage keys, or unrelated records.
-- Public-link access must not grant access to the full music library.
-- Public link permissions must be constrained to Viewer for MVP unless an explicit, separately reviewed Editor-link feature is implemented.
+**Sync rules**
+- Pull: fetch everything changed since the device's last sync, per table, including tombstones and
+  status changes. First sync downloads all metadata.
+- Push: local changes are written to IndexedDB first, then to an outbox. Per plan, pending changes are
+  sent as one snapshot (title, description, status, ordered items with notes) with the version the
+  member started from and a unique change id, so a retry never applies twice.
+- The server applies the snapshot in one transaction only if the plan's version still matches, then
+  increments the version and records activity.
+- Triggers: app start, the browser coming online, returning to the app, and a timer with backoff.
+  Background sync while the app is closed is not required (iOS Safari doesn't support it).
+
+**Conflict resolution**
+- If another device saved the plan first, the push is refused and the device receives the current
+  server copy. The plan is marked *Needs your attention* and the member chooses:
+  1. **Keep theirs**: discard my offline changes to this plan.
+  2. **Keep mine**: replace the server copy with mine (recorded in activity).
+  3. **Save mine as a new plan**: keep both.
+- If the plan was archived elsewhere, the choices are **Restore with my changes** or **Save mine as a
+  new plan**. If it was permanently deleted by an administrator, only **Save mine as a new plan**.
+- An arrangement archived or replaced while a device was offline keeps working from the downloaded
+  copy; the app shows *Archived* or *Newer version available*.
+
+**Storage limits**
+- Show used and available space (`navigator.storage.estimate()` where supported).
+- Before a bulk download, show its total size and check it fits.
+- On a full disk or failed download: stop, keep what succeeded, report which sheets failed, offer retry.
+- Safari may remove data of sites not used for 7 days unless installed to the Home Screen; the app
+  explains this once on iOS.
 
 ### 4.6 Dashboard
 
-The dashboard should include:
 - Upcoming events
-- Recently updated plans owned by the user
-- Plans shared with the user
+- Recently updated plans
 - Recently added music
-- Quick action to create a plan
-- Quick action to upload music
+- Unsynced changes and conflicts (only when there are any)
+- Quick action: create a plan
+- Quick action (administrators): upload music
 
-Keep the dashboard focused. Avoid unnecessary charts and administrative metrics in the MVP.
+Keep it focused; no charts or administrative metrics.
 
 ---
 
 ## 5. Main User Journeys
 
-### 5.1 Upload music
+### 5.1 Prepare a phone for Sunday
+1. Member opens the Setlist address (online), optionally installs it.
+2. The library, plans and events sync in the background.
+3. Member opens the Sunday plan and taps **Make available offline**; the plan's sheets download with
+   progress shown.
+4. At church with no signal, the member opens Setlist from the Home Screen, opens the plan and swipes
+   through the sheets.
 
-1. Member opens Music Library.
-2. Member selects Add Music.
-3. Member uploads a PDF.
-4. Member enters the music title and optional metadata.
-5. Member saves.
-6. The system validates the file and stores it privately.
-7. The music piece and arrangement become searchable.
-8. The system records the uploader.
+### 5.2 Build a plan offline
+1. Member creates a plan with no connection; it shows *Saved on this device*.
+2. Member searches the synced library, adds arrangements and reorders them.
+3. When the phone is back online, the plan syncs and shows *Synced*.
 
-### 5.2 Create a plan
+### 5.3 Two members edit the same plan
+1. Two members change the same plan while offline.
+2. The first to reconnect syncs normally.
+3. The second sees *Needs your attention*, compares, and chooses Keep theirs / Keep mine / Save as new.
 
-1. Member opens My Plans.
-2. Member selects Create Plan.
-3. Member enters a title and optional description.
-4. The system creates a draft owned by the member.
-5. Member searches the library inside the editor.
-6. Member selects a specific arrangement.
-7. Member adds it to the plan.
-8. Member repeats for additional songs.
-9. Member drags songs into the desired order.
-10. The system saves changes and updates the plan activity.
-11. Member shares the plan if needed.
-
-### 5.3 Collaborate
-
-1. Owner opens a plan.
-2. Owner shares it with a registered member.
-3. Owner chooses Viewer or Editor.
-4. Recipient sees the plan in Shared with Me.
-5. Editor can add, remove, and reorder songs.
-6. Viewer can view and access referenced PDFs but cannot modify the plan.
-7. Important changes record the actor and timestamp.
-
-### 5.4 Share by link
-
-1. Owner opens Share.
-2. Owner creates a view-only link.
-3. System generates a secure token and stores its hash.
-4. Owner copies and distributes the link.
-5. Recipient opens the link.
-6. System validates the token and displays only the shared plan and referenced music sheets.
-7. Owner can revoke the link at any time.
+### 5.4 Administrator uploads music
+1. Administrator signs in, opens the library and chooses **Add music**.
+2. Uploads a PDF, enters the title and optional metadata, saves.
+3. The server validates the file; the song appears in everyone's library at their next sync.
 
 ---
 
 ## 6. Application Pages and Navigation
 
 ### Primary navigation
-
-- Dashboard
-- Music Library
-- My Plans
+- Home (dashboard)
+- Library
+- Plans
 - Events
-- Shared with Me
-- Profile / Settings
+- Settings (device name, offline storage, install, administrator sign-in)
 
-Administrator-only:
-- Member Management
-- Application Settings
+Administrators also see: Add music, Administrators, Application settings.
 
-### Required screens
+### Screens
 
-| Screen | Purpose |
-|---|---|
-| Sign in | Authenticate member |
-| Invitation acceptance | Join the music ministry |
-| Dashboard | Overview and quick actions |
-| Music Library | Search and browse music |
-| Add/Edit Music | Upload PDF and manage metadata |
-| Music Details | View arrangements and preview PDFs |
-| My Plans | List owned plans |
-| Plan Editor | Search, add, remove, reorder music |
-| Plan Details | Read-only/shared plan view |
-| Events | List upcoming and past events |
-| Event Details | View event and associated plans |
-| Shared with Me | List plans shared with current user |
-| Public Plan | View plan through a valid share link |
-| Profile | Update personal information |
-| Member Management | Administrator membership controls |
+| Screen | Purpose | Offline |
+|---|---|---|
+| Home | Overview, sync status, quick actions | Yes |
+| Library | Search and browse | Yes |
+| Music details | Arrangements, sheet viewer, download | Yes (downloaded sheets) |
+| Sheet viewer | Full-width PDF view | Yes (downloaded sheets) |
+| Plans | All plans, with offline availability and sync state | Yes |
+| Plan details | Read view, "Make available offline" | Yes |
+| Plan editor | Search, add, remove, reorder, notes | Yes |
+| Conflict resolution | Compare and choose | Yes |
+| Events / Event details | Upcoming and past; plans per event | Yes (read-only) |
+| Settings | Device name, storage, remove data, install, sign in | Yes (sign-in needs a connection) |
+| Administrator sign-in / reset password / accept invitation | Administrator auth | No |
+| Add/Edit music, Administrators, Application settings | Administration | No; says so when offline |
 
-### Plan Editor UX
-
-The Plan Editor is the most important screen in the product.
-
-Desktop:
-- Main area: ordered setlist.
-- Side panel: searchable music library.
-- Header: plan title, event association, share action, save state.
-- Song row: drag handle, order, title, arrangement/key, PDF preview action, remove action.
-
-Mobile:
-- Use tabs, drawers, or stacked panels.
-- Keep the setlist easy to read and reorder.
-- Ensure controls have touch-friendly target sizes.
-- PDF preview should use the available screen width.
+### Plan editor UX
+- Desktop: ordered setlist in the main area, searchable library in a side panel; header with title,
+  events, save/sync state.
+- Mobile: tabs or stacked panels; touch-friendly targets; reorder by drag and by move up/down.
+- Song row: drag handle, order, title, arrangement/key, offline badge, view sheet, remove.
 
 ### Design principles
-
-- Responsive and mobile-friendly.
-- Clear typography and restrained visual design.
-- Prioritize music title and arrangement details.
-- Avoid clutter and unnecessary dashboard widgets.
-- Provide useful empty states.
-- Provide clear loading, error, and save states.
-- Keyboard accessibility for important controls.
-- Do not rely on color alone to communicate permission or status.
+- Mobile-first, restrained, readable on stage (large title and key).
+- Clear offline, sync, loading, error and empty states; never only color.
+- Keyboard accessible; respects reduced motion.
 
 ---
 
@@ -455,501 +393,171 @@ Mobile:
 
 ### 7.1 Architecture decision
 
-Use a **Next.js modular monolith with Supabase** for the MVP.
+A **Next.js modular monolith with Supabase**, unchanged, with:
+- a **browser-rendered member area** that reads from IndexedDB and syncs with Supabase directly through
+  supabase-js under RLS, and
+- a **server-rendered administrator area** (server actions and route handlers) for privileged,
+  online-only work.
 
-Do not create a separate NestJS API or microservices initially. This is a small application maintained by one developer, and the additional server deployment and maintenance would not provide enough value yet.
+No NestJS, no microservices, no local server.
 
-Use server-side operations for privileged actions and authorization-sensitive workflows. Use Supabase client capabilities only where Row Level Security (RLS) policies make the operation safe.
-
-### 7.2 Recommended stack
+### 7.2 Stack
 
 | Layer | Technology |
 |---|---|
 | Web framework | Next.js (App Router) |
 | Language | TypeScript |
 | UI | Tailwind CSS + shadcn/ui |
-| Form validation | Zod + React Hook Form |
+| Validation | Zod |
 | Database | Supabase PostgreSQL |
-| Authentication | Supabase Auth |
-| File storage | Supabase Storage |
-| Database types | Supabase generated TypeScript types |
-| PDF preview | PDF.js / react-pdf |
+| Authentication | Supabase Auth (anonymous sign-ins for members, email/password for administrators) |
+| Bot protection | Cloudflare Turnstile (free) through Supabase Auth's CAPTCHA support |
+| File storage | Supabase Storage (private bucket) |
+| Local database | IndexedDB through Dexie |
+| Offline shell and assets | Service worker (hand-written or generated; decided in the plan) |
+| PDF viewing | PDF.js / react-pdf |
 | Drag and drop | dnd-kit |
 | Hosting | Netlify |
 | Source control | GitHub |
-| Optional DNS | Cloudflare DNS |
-
-Use current stable, mutually compatible package versions at implementation time. Do not pin obsolete versions from this document.
 
 ### 7.3 High-level architecture
 
 ```text
-Browser (desktop / tablet / mobile)
-              |
-              v
-        Next.js application
-        - App Router
-        - UI components
-        - Server actions / route handlers
-        - Server-side authorization
-              |
-       +------+------+
-       |             |
-       v             v
-Supabase Auth   Supabase PostgreSQL
-                      |
-                      v
-                Supabase Storage
-                Private PDF bucket
-
-GitHub repository
-       |
-       v
-Netlify build and deployment
+Device (browser / installed PWA)
+  Service worker: app shell + assets
+  IndexedDB: library metadata, plans, events, outbox, sync state
+  Cache Storage: downloaded PDFs
+  Member pages (client-rendered) ──── read/write local data
+        |  sync engine (when online)
+        v
+  Supabase: Auth (anonymous + admin) · PostgreSQL (RLS) · Storage (private)
+        ^
+        |  admin pages, uploads, admin actions (server-side, online only)
+  Next.js on Netlify
 ```
 
-### 7.4 Backend approach
+### 7.4 Rules
 
-Use Next.js server actions or route handlers for:
-- Creating and updating plans
-- Reordering plan items
-- Sharing and revoking access
-- Creating and revoking share links
-- Upload authorization and metadata operations
-- Administrator actions
-- Any operation requiring multi-step validation or transactions
+- Member pages must render entirely from local data, with ids in the query string, so a fixed set of
+  precached pages can open any plan, song or event offline.
+- Privileged work (upload validation, administrator management, permanent deletes, storage cleanup)
+  runs on the server. The secret key never reaches the browser.
+- RLS is the security boundary for everything the browser does directly. Never rely on UI checks.
+- Plan writes from the browser go through one SQL function (`sync_plan`) that checks the version.
 
-Use Supabase Auth for identity.
-
-Use PostgreSQL RLS as a second security boundary. Never rely only on frontend checks.
-
-Avoid exposing the Supabase service-role key to browser code. Keep it server-side and use it only for operations that genuinely require elevated privileges.
-
-### 7.5 Suggested source structure
+### 7.5 Source structure (target)
 
 ```text
 src/
   app/
-    (auth)/
-      sign-in/
-      accept-invitation/
-    (app)/
-      dashboard/
-      library/
-      plans/
-      events/
-      shared/
-      settings/
-      admin/
-    share/
-      [token]/
-    api/
+    (member)/        client-rendered, precached: home, library, plan, plans, events, sheet, settings
+    (admin)/         server-rendered: music upload/edit, administrators, application settings
+    (auth)/          administrator sign-in, reset, accept invitation
+    api/             route handlers (upload finalization, sheet URLs)
   components/
-    ui/
-    layout/
-    music/
-    plans/
-    events/
-    sharing/
   features/
-    auth/
-    members/
-    music-library/
-    plans/
-    events/
-    sharing/
-  lib/
-    supabase/
-      client.ts
-      server.ts
-      middleware.ts
-    permissions/
-    validation/
-    utils/
-  types/
-  hooks/
-
-supabase/
-  migrations/
-  seed.sql
-
-public/
+    local-db/        Dexie schema and queries
+    sync/            pull, outbox, push, conflicts
+    offline/         sheet downloads, storage estimates
+    library/  plans/  events/  admin/
+  lib/supabase/
+public/sw.js
+supabase/migrations, supabase/tests
 ```
-
-Keep business logic in feature/service modules rather than putting all logic into page components.
 
 ---
 
 ## 8. Database Specification
 
-Use PostgreSQL with UUID primary keys.
+PostgreSQL with UUID primary keys. Ids for plans and plan items may be generated on the device.
 
 ### 8.1 Tables
 
-#### profiles
+- **profiles**: one per auth user. `role` (member, admin), `status` (active, inactive), optional
+  `display_name`, `email` (administrators only), `is_anonymous`, timestamps.
+- **music_pieces**: as §4.2, plus `tags text[]`, `updated_at` index for sync.
+- **arrangements**: as §4.2, including `content_sha256` and status `pending|active|archived`.
+- **plans**: as §4.3, with `version`, `updated_at`, `deleted_at`.
+- **plan_items**: as §4.3, with `removed_at`; unique active position per plan.
+- **events**: as §4.4.
+- **event_plans**: event, plan, position, created at; unique (event, plan); cascade on event delete.
+- **plan_activities**: plan, actor, action, metadata, created at. Actions: plan created/updated,
+  item added/removed, reordered, archived/restored, duplicated, conflict overwritten.
+- **sync_changes** (or equivalent): applied change ids for idempotent pushes.
+- **app_settings**: single row: church name, timezone, upload size limit.
 
-- `id` UUID, primary key, references auth user
-- `display_name` text, required
-- `email` text, where needed for display/search
-- `role` enum: `member`, `admin`
-- `status` enum: `active`, `inactive`, `invited`
-- `created_at` timestamptz
-- `updated_at` timestamptz
-
-#### music_pieces
-
-- `id` UUID, primary key
-- `title` text, required
-- `composer` text, nullable
-- `description` text, nullable
-- `category` text, nullable
-- `status` enum: `active`, `archived`
-- `created_by` UUID, references profiles
-- `updated_by` UUID, references profiles
-- `created_at` timestamptz
-- `updated_at` timestamptz
-
-#### arrangements
-
-- `id` UUID, primary key
-- `music_piece_id` UUID, references music_pieces
-- `title` text, required
-- `musical_key` text, nullable
-- `bpm` integer, nullable
-- `instrument_notes` text, nullable
-- `storage_path` text, required
-- `original_filename` text, required
-- `mime_type` text, required
-- `file_size_bytes` bigint, required
-- `status` enum: `active`, `archived`
-- `uploaded_by` UUID, references profiles
-- `created_at` timestamptz
-- `updated_at` timestamptz
-
-#### plans
-
-- `id` UUID, primary key
-- `title` text, required
-- `description` text, nullable
-- `owner_id` UUID, references profiles
-- `status` enum: `draft`, `published`, `archived`
-- `version` integer, default 1
-- `created_at` timestamptz
-- `updated_at` timestamptz
-- `updated_by` UUID, references profiles
-
-#### plan_items
-
-- `id` UUID, primary key
-- `plan_id` UUID, references plans
-- `arrangement_id` UUID, references arrangements
-- `position` integer, required
-- `notes` text, nullable
-- `added_by` UUID, references profiles
-- `created_at` timestamptz
-- `updated_at` timestamptz
-
-Add an index on `(plan_id, position)`. Consider a uniqueness constraint on `(plan_id, position)` and implement reorder operations safely to avoid transient collisions.
-
-#### plan_shares
-
-- `id` UUID, primary key
-- `plan_id` UUID, references plans
-- `user_id` UUID, references profiles
-- `permission` enum: `viewer`, `editor`
-- `created_by` UUID, references profiles
-- `created_at` timestamptz
-- Unique constraint on `(plan_id, user_id)`
-
-#### plan_links
-
-- `id` UUID, primary key
-- `plan_id` UUID, references plans
-- `token_hash` text, unique, required
-- `permission` enum: `viewer` only for MVP
-- `expires_at` timestamptz, nullable
-- `revoked_at` timestamptz, nullable
-- `created_by` UUID, references profiles
-- `created_at` timestamptz
-
-Never store the raw public token.
-
-#### events
-
-- `id` UUID, primary key
-- `title` text, required
-- `description` text, nullable
-- `event_date` date, required
-- `start_time` time, nullable
-- `created_by` UUID, references profiles
-- `created_at` timestamptz
-- `updated_at` timestamptz
-
-#### event_plans
-
-- `id` UUID, primary key
-- `event_id` UUID, references events
-- `plan_id` UUID, references plans
-- `position` integer, default 0
-- `created_at` timestamptz
-- Unique constraint on `(event_id, plan_id)`
-
-#### plan_activities
-
-- `id` UUID, primary key
-- `plan_id` UUID, references plans
-- `user_id` UUID, references profiles
-- `action` text or enum
-- `metadata` jsonb, nullable
-- `created_at` timestamptz
-
-Record important events such as plan creation, title changes, song added/removed, reorder, sharing changes, and archive actions. Do not log secrets or raw share tokens.
+Removed from v1: `plan_shares`, `plan_links`.
 
 ### 8.2 Database rules
-
-- Use foreign keys and appropriate indexes.
-- Use soft deletion/archive for music and plans.
-- Use transactions or PostgreSQL functions for multi-row reorder operations.
-- Validate that an arrangement belongs to an active music piece before adding it to a plan.
-- Validate that an arrangement is accessible to the current user.
-- Use optimistic concurrency for plan updates.
-- Avoid storing duplicate profile data that can be derived safely from the auth provider.
-- Generate database types and keep application types aligned with migrations.
+- Foreign keys and indexes; `updated_at` indexed on every synced table.
+- Soft delete or tombstones for everything that syncs, so deletions reach devices.
+- Multi-row changes (plan snapshot, reorder) are transactional SQL functions.
+- Only active arrangements of active pieces can be newly added to plans.
+- Optimistic concurrency on plans through `version`.
 
 ### 8.3 Future organization support
-
-The first release is for one church. Do not implement multi-tenant management.
-
-However, keep organization ownership easy to introduce later. Avoid hardcoding church names or organization-specific assumptions throughout business logic. An `organization_id` can be added in a later migration if another church needs its own workspace.
+Unchanged: one church now; keep an `organization_id` easy to add later.
 
 ---
 
 ## 9. File Storage and PDF Security
 
-### 9.1 Storage
-
-Use a private Supabase Storage bucket named `music-sheets`.
-
-Example object path:
-
-```text
-music-sheets/{music_piece_id}/{arrangement_id}/{file_name}.pdf
-```
-
-Do not use public buckets for music sheets.
-
-### 9.2 Upload flow
-
-1. Authenticate the user.
-2. Confirm the user is an active member.
-3. Validate file size.
-4. Validate actual PDF content; do not trust extension alone.
-5. Upload to private storage.
-6. Save arrangement metadata and storage path.
-7. If metadata persistence fails, clean up the uploaded object or record it for cleanup.
-8. Record uploader and timestamp.
-
-### 9.3 Viewing and downloading
-
-- Check the user's plan/library permission before issuing access.
-- Generate short-lived signed URLs for authorized files.
-- Public plan links may access only arrangements referenced by that plan.
-- Do not expose raw private storage paths as authorization.
-- Consider a server-side download route if signed URL exposure or revocation semantics require tighter control.
-
-### 9.4 Backup
-
-- Export database data regularly.
-- Keep a separate backup of important PDFs or use a storage backup strategy.
-- Test restoration, not just backup creation.
-- Supabase Free does not include automatic backups; production should use a paid plan or a deliberate independent backup process.
+- Private bucket `music-sheets`, object path `{music_piece_id}/{arrangement_id}/{file}.pdf`.
+- Reading requires a valid session (anonymous or administrator); the app gets short-lived signed URLs
+  through a route that authorizes and redirects (it never streams PDF bytes through Netlify).
+- Writing requires an active administrator.
+- Downloaded copies live in the device's Cache Storage, keyed by arrangement and file version.
+- Backups: scheduled database dump and storage copy off-site; restoration tested once before launch.
 
 ---
 
 ## 10. Authorization and RLS
 
-RLS is mandatory for all user-accessible tables and storage objects.
+RLS is mandatory on every table and storage object. The `anon` role (no session) gets no table access.
 
-### 10.1 Core access rules
+| Data | Read | Write |
+|---|---|---|
+| profiles | Own row; administrators all; display names readable by any session | Own `display_name`; administrators change role/status |
+| music_pieces, arrangements, storage writes | Any session | Active administrators only |
+| plans, plan_items | Any session (except permanently deleted) | Any session through `sync_plan` / plan functions; permanent delete administrators only |
+| events, event_plans | Any session | Any session creates/edits/attaches; delete administrators only |
+| plan_activities | Any session | Written by SQL functions only |
+| app_settings | Any session | Administrators only |
 
-**Profiles**
-- Members can view the minimum profile information needed to identify other members.
-- Users can update only their own profile fields.
-- Only administrators can change roles or membership status.
-
-**Music library**
-- Active members can read active music pieces and arrangements.
-- Active members can insert and update music records.
-- Archive operations are allowed for active members, subject to references and safe business rules.
-- Inactive users cannot access the library.
-
-**Plans**
-- Owner can read and manage their plans.
-- Shared Editors can read and modify the plan and its items.
-- Shared Viewers can read the plan and its items.
-- Other members cannot read private plans.
-
-**Plan shares**
-- Only the plan owner can grant or revoke shares.
-- Recipients can see their own share records.
-- A user cannot grant themselves access.
-
-**Public links**
-- Validate the token through a controlled server-side path.
-- Do not expose a broad table policy that lets anonymous users enumerate plans or tokens.
-- Public access is limited to the exact plan and its referenced arrangements.
-- Revoked or expired tokens must fail.
-
-**Events**
-- Define a consistent single-church visibility rule. Recommended MVP: active members can view events; creators and authorized members can manage them. If event privacy is later required, add event-level sharing.
-
-**Storage**
-- Keep the bucket private.
-- Storage RLS must verify active membership and appropriate library/plan access.
-- Never assume that hiding a download button secures the PDF.
-
-### 10.2 Security implementation requirements
-
-- Use the authenticated user's identity from the verified session.
-- Never trust user IDs supplied by the browser for ownership decisions.
-- Never expose service-role secrets in client bundles.
-- Validate every mutation server-side.
-- Add tests for unauthorized access and cross-user access.
-- Test anonymous share-link access separately from authenticated member access.
+**Security requirements**
+- Blocked device identities and deactivated administrators lose write access immediately.
+- Never trust ids from the browser for authorship; take them from the verified session.
+- Validate every mutation in SQL functions or server code.
+- Test with pgTAP: no-session access, anonymous member, administrator, deactivated administrator,
+  blocked device, version conflicts, idempotent retries.
+- Pages are `noindex`; `robots.txt` disallows crawling.
 
 ---
 
-## 11. API / Server Operation Requirements
+## 11. Server Operations
 
-Use Next.js server actions or route handlers. Keep operations grouped by feature.
+**Browser → Supabase (RLS):** pull changes; `sync_plan(id, base_version, snapshot, change_id)`;
+duplicate plan; archive/restore plan; create/update event; attach/detach plan; set display name;
+request a sheet URL.
 
-Suggested operations:
+**Next.js server (administrator, online only):** prepare upload / finalize upload / replace PDF;
+update music metadata; archive, restore, delete music; permanently delete plan or event; invite,
+deactivate, reactivate administrators; block device; update application settings; storage cleanup.
 
-### Music library
-- `listMusicPieces`
-- `getMusicPiece`
-- `createMusicPiece`
-- `updateMusicPiece`
-- `archiveMusicPiece`
-- `createArrangement`
-- `updateArrangement`
-- `archiveArrangement`
-- `createAuthorizedSheetUrl`
-
-### Plans
-- `listMyPlans`
-- `listSharedPlans`
-- `getPlan`
-- `createPlan`
-- `updatePlan`
-- `archivePlan`
-- `duplicatePlan`
-- `addPlanItem`
-- `removePlanItem`
-- `reorderPlanItems`
-
-### Sharing
-- `sharePlanWithMember`
-- `updateMemberPermission`
-- `revokeMemberShare`
-- `createPlanLink`
-- `revokePlanLink`
-- `getPublicPlanByToken`
-
-### Events
-- `listEvents`
-- `createEvent`
-- `updateEvent`
-- `archiveEvent` (optional)
-- `addPlanToEvent`
-- `removePlanFromEvent`
-
-### Members
-- `listMembers`
-- `inviteMember`
-- `deactivateMember`
-- `updateOwnProfile`
-
-Every operation must:
-1. Validate input with Zod.
-2. Verify the authenticated user.
-3. Verify active membership.
-4. Verify resource-level permission.
-5. Perform the operation safely.
-6. Return a typed, minimal result.
-7. Avoid returning secrets or internal storage credentials.
-
-Do not create an endpoint for every database query automatically. Keep the API surface focused on business operations.
+Every server operation validates input with Zod, verifies the session and role, performs the change
+safely, and returns a minimal typed result.
 
 ---
 
-## 12. Hosting and Budget Plan
+## 12. Hosting and Budget
 
-### 12.1 Recommended MVP hosting
-
-Use:
-
-- **Netlify Free** — Next.js application hosting and Git-based deployments.
-- **Supabase Free** — PostgreSQL, Auth, and private PDF storage.
-- **GitHub Free** — source control.
-- **Cloudflare DNS** — optional DNS management.
-- **Custom domain** — optional during development; purchase when ready to launch.
-
-This avoids maintaining a virtual machine, Docker host, separate API server, and database server.
-
-### 12.2 Why not Vercel Hobby for production?
-
-Vercel Hobby is intended for personal, non-commercial use. Since this app is intended to serve a church music ministry, use a plan/provider whose terms fit the actual use. Vercel Pro is a paid alternative.
-
-### 12.3 Free-tier limitations to plan for
-
-Supabase Free currently includes:
-- 500 MB database size per project
-- 1 GB file storage
-- 5 GB egress and 5 GB cached egress
-- 50,000 monthly active users
-- Projects may pause after one week of inactivity
-- No automatic backups
-
-Netlify Free currently uses a monthly credit allowance with hard limits. Monitor usage and verify current plan limits before launch.
-
-Free tiers are suitable for development and an initial pilot, but do not treat them as a guaranteed production service.
-
-### 12.4 Production upgrade path
-
-When church members begin depending on the app:
-
-- Upgrade Supabase to Pro (currently listed at $25/month).
-- Keep Netlify Free if its usage allowance remains sufficient.
-- Upgrade Netlify only if usage or required features justify it.
-- Consider Cloudflare R2 for PDFs if storage or egress economics make it worthwhile.
-- Add an independent database and file backup process.
-
-Indicative starting production budget:
-- Supabase Pro: approximately USD $25/month.
-- Netlify Free: USD $0/month, within usage limits.
-- Domain: additional annual cost.
-- Optional email provider: depends on invitation/reset email volume and provider plan.
-
-Prices and quotas can change. Check official pricing pages before subscribing:
-
-- Netlify: https://www.netlify.com/pricing/
-- Supabase: https://supabase.com/pricing
-- Vercel: https://vercel.com/pricing
-- Render: https://render.com/pricing
-- Cloudflare R2: https://developers.cloudflare.com/r2/pricing/
-
-### 12.5 Cost controls
-
-- Set usage alerts where available.
-- Do not enable paid overages without understanding the billing impact.
-- Keep PDF uploads size-limited.
-- Paginate library and plan queries.
-- Avoid unnecessary realtime subscriptions.
-- Use signed URLs with sensible expiry.
-- Avoid duplicating PDF files when a plan references an existing arrangement.
-- Track storage and egress usage monthly.
-- Export backups independently.
+- Netlify Free, Supabase Free and GitHub Free during development; Supabase Pro (about US$25/month)
+  once the ministry relies on it (backups, no pausing, 250 GB egress).
+- **Egress:** every download of a sheet counts against Supabase egress (Free: 5 GB/month). Default to
+  downloading per plan; show sizes before bulk downloads; review monthly.
+- The browser-rendered member area reduces Netlify function usage.
+- Custom SMTP is still required for administrator invitations and password resets.
+- Prices change; check the providers' pricing pages before subscribing.
 
 ---
 
@@ -957,294 +565,135 @@ Prices and quotas can change. Check official pricing pages before subscribing:
 
 | Area | Requirement |
 |---|---|
-| Responsiveness | Support mobile, tablet, and desktop |
-| Security | Authenticated access, RLS, private storage |
-| Performance | Paginated lists and indexed search |
-| Reliability | Preserve user input after recoverable failures |
-| Data integrity | Foreign keys and transactional mutations |
-| Accessibility | Keyboard-accessible controls and semantic markup |
-| Maintainability | Feature-based modular code organization |
-| Observability | Useful server logs and error reporting |
-| Portability | Standard PostgreSQL schema and portable PDF object paths |
-| Cost | Free tiers during development; low recurring production cost |
-
-### Performance targets (initial goals)
-
-- Common pages should render quickly under normal broadband/mobile conditions.
-- Paginate library and plan lists.
-- Avoid loading full PDFs until preview is requested.
-- Use PDF.js range loading where supported.
-- Avoid loading the entire music library into browser memory.
-- Search should remain responsive with a few thousand music pieces.
-
-Do not promise strict uptime or performance SLAs for free-tier hosting.
+| Availability | Member features work offline on previously used devices |
+| Data safety | No silent loss of local edits; idempotent sync; conflicts surfaced |
+| Responsiveness | Mobile, tablet, desktop |
+| Security | RLS everywhere; administrator-only library writes; CAPTCHA; private storage |
+| Performance | Local reads render instantly; first sync of a few thousand songs within seconds |
+| Accessibility | Keyboard accessible; semantic markup; status not by color alone |
+| Browser support | Current Chrome, Safari (iOS and macOS), Firefox, Edge |
+| Maintainability | Feature-based modules; pgTAP and unit tests; offline end-to-end tests |
+| Cost | Free tiers in development; low production cost |
 
 ---
 
-## 14. MVP Delivery Plan
+## 14. Delivery Plan
 
-Build in small, verifiable milestones. Do not implement every feature in one large change.
+Milestones 0–5 were built under v1.0. Their library, plans, events and UI carry over; sharing and member
+accounts are removed. Milestones 2–5 are not deployed in their v1 form.
 
-### Milestone 0 — Repository and project foundation
+### Milestone 6 — Access model (online)
+Anonymous device sessions with CAPTCHA; administrator-only library writes; plans and events for every
+session; remove member login, invitations for members, sharing and public links; administrator
+management; RLS rewrite with pgTAP tests.
+**Exit:** anyone can use the app without signing in; only administrators change the library.
 
-- Create Next.js App Router project.
-- Configure TypeScript and linting.
-- Configure Tailwind and shadcn/ui.
-- Configure Supabase client/server helpers.
-- Configure environment variables.
-- Create initial responsive layout and navigation.
-- Configure GitHub repository and Netlify deployment.
-- Add README with local setup instructions.
+### Milestone 7 — Local data and app shell
+IndexedDB schema; pull sync with tombstones; client-rendered member pages; precached app shell; offline
+reading of library, plans and events.
+**Exit:** with the network off, a previously used device opens the app and every synced plan and song.
 
-**Exit criteria:** Application deploys successfully and environment configuration is documented.
+### Milestone 8 — Offline sheets
+Per-sheet and per-plan downloads; availability badges; storage usage, quota and failure handling;
+persistent storage request; iOS install guidance.
+**Exit:** a plan made available offline shows all its sheets with no network.
 
-### Milestone 1 — Authentication and membership
+### Milestone 9 — Offline editing and sync
+Device-generated ids; outbox; `sync_plan` with version check and idempotency; automatic retries;
+conflict resolution screen; update prompt that keeps the queue.
+**Exit:** offline edits sync on reconnect, and conflicts never lose data.
 
-- Sign in/sign out.
-- Invitation acceptance.
-- Profile creation.
-- Active/inactive membership.
-- Administrator member management.
-- Protected routes.
-- Initial RLS policies.
-
-**Exit criteria:** Only active members can access protected application data.
-
-### Milestone 2 — Music library
-
-- Database migrations for music pieces and arrangements.
-- Private PDF bucket.
-- Upload and validation.
-- Music metadata CRUD.
-- Multiple arrangements.
-- Search and filtering.
-- PDF preview and download.
-- Archive behavior.
-
-**Exit criteria:** Active members can safely upload, find, preview, and download music sheets.
-
-### Milestone 3 — Plans and plan editor
-
-- Plan CRUD.
-- Add arrangement to plan.
-- Remove plan item.
-- Drag-and-drop reorder.
-- Autosave / save states.
-- Version-based conflict handling.
-- Duplicate plan.
-- Activity history.
-
-**Exit criteria:** A member can create a complete setlist and reload it without losing order or data.
-
-### Milestone 4 — Sharing and collaboration
-
-- Member search for sharing.
-- Viewer/Editor permissions.
-- Shared with Me page.
-- Plan access enforcement.
-- Share link creation and revocation.
-- Expiration support.
-- Public plan view.
-- Referenced PDF access.
-
-**Exit criteria:** Viewer/editor permissions work correctly, and public links cannot expose unrelated data.
-
-### Milestone 5 — Events and dashboard
-
-- Event CRUD.
-- Associate multiple plans with an event.
-- Upcoming and past event lists.
-- Dashboard summaries.
-- Responsive refinements.
-
-**Exit criteria:** Members can organize multiple plans under real church events.
-
-### Milestone 6 — Hardening and launch
-
-- Authorization tests.
-- RLS tests.
-- Upload security tests.
-- Mobile usability checks.
-- Backup and restore procedure.
-- Error handling and logging.
-- Production environment setup.
-- User acceptance testing with a small group of music ministry members.
+### Milestone 10 — Hardening and launch
+Offline end-to-end tests (network turned off); real iOS Safari and Android Chrome checks; abuse controls
+review; backups and restore drill; egress review; production project and Supabase Pro decision; user
+acceptance test with ministry members.
 
 ---
 
-## 15. MVP Acceptance Checklist
+## 15. Acceptance Checklist
 
-### Authentication
-- [ ] Member can sign in and sign out.
-- [ ] Invitation flow works.
-- [ ] Inactive member cannot access protected data.
-- [ ] Administrator can deactivate a member.
+### Access
+- [ ] A new device opens Setlist with no sign-in and can browse the library.
+- [ ] A request with no session gets no data.
+- [ ] Members cannot upload, edit, archive or delete music (UI, server and database).
+- [ ] An administrator can sign in, upload, and sign out; the device then works as a member.
+- [ ] A deactivated administrator loses administrator access immediately.
 
-### Music library
-- [ ] Member can upload a valid PDF.
-- [ ] Invalid file types are rejected.
-- [ ] File size limit is enforced.
-- [ ] Member can create a music piece.
-- [ ] Member can add multiple arrangements.
-- [ ] Member can search music.
-- [ ] Member can preview and download authorized PDFs.
-- [ ] Archived music is excluded by default.
-- [ ] Existing plan references are not broken by archive actions.
+### Library
+- [ ] A valid PDF uploads; non-PDFs, oversized and truncated files are rejected.
+- [ ] Multiple arrangements per piece; search and filters work online and offline.
+- [ ] Archived music is hidden by default and still opens inside existing plans.
 
 ### Plans
-- [ ] Member can create multiple plans.
-- [ ] Member can add a selected arrangement.
-- [ ] Member can remove a plan item.
-- [ ] Member can reorder songs.
-- [ ] Order persists after refresh.
-- [ ] Save failures are visible and recoverable.
-- [ ] Duplicate plan creates a separate plan and does not copy existing shares.
+- [ ] Anyone can create, edit, reorder, duplicate and archive any plan.
+- [ ] Order and notes persist after reload, online and offline.
+- [ ] Only administrators can permanently delete a plan.
+
+### Offline
+- [ ] With the network off, a previously used device opens the app, the library, plans and events.
+- [ ] A plan made available offline opens every sheet with the network off.
+- [ ] Each song, plan and sheet shows whether it is available offline.
+- [ ] A plan created and edited offline syncs automatically when the network returns.
+- [ ] A sync interrupted halfway retries without duplicating changes.
+- [ ] Two devices editing the same plan offline produce a conflict screen; each choice works and no edit
+      is lost without the member choosing it.
+- [ ] A full disk or failed download is reported and can be retried.
+- [ ] Updating the app keeps unsynced changes.
 
 ### Events
-- [ ] Member can create an event.
-- [ ] Event can have multiple plans.
-- [ ] Plan can exist without an event.
-- [ ] Removing an event-plan association does not delete the plan.
-
-### Sharing
-- [ ] Owner can share with a registered member.
-- [ ] Viewer cannot modify.
-- [ ] Editor can modify.
-- [ ] Owner can revoke member access.
-- [ ] Owner can create a view-only link.
-- [ ] Owner can revoke a public link.
-- [ ] Expired links fail.
-- [ ] Public link cannot access unrelated plans or library records.
+- [ ] Events can be created and edited online and viewed offline.
+- [ ] An event can have multiple plans; removing a plan from an event keeps the plan.
+- [ ] Only administrators can delete events.
 
 ### Quality
-- [ ] Responsive desktop layout works.
-- [ ] Responsive mobile layout works.
-- [ ] Important actions are keyboard accessible.
-- [ ] Errors and empty states are clear.
-- [ ] Database and file backup/restore process is documented.
+- [ ] Desktop and mobile layouts work; important actions are keyboard accessible.
+- [ ] Backup and restore are documented and tested.
 
 ---
 
-## 16. Implementation Instructions for Codex / Claude Code
+## 16. Implementation Instructions
 
-Treat this document as the product requirements baseline.
-
-### General instructions
-
-1. Inspect the existing repository before making changes.
-2. If the repository is empty, initialize the project using the stack specified here.
-3. Do not assume a feature exists without inspecting the code.
-4. Do not implement all milestones in one pass.
-5. Before implementation, produce a concise plan identifying files, schema changes, and dependencies.
-6. Work milestone by milestone.
-7. Use database migrations for all schema changes.
-8. Generate and use Supabase TypeScript database types.
-9. Implement and test RLS policies; never rely only on frontend authorization.
-10. Never expose service-role keys or other secrets to the browser.
-11. Validate all inputs on the server.
-12. Add tests for important business rules and unauthorized access.
-13. Keep components small and organized by feature.
-14. Use responsive layouts from the beginning.
-15. Do not add unnecessary dependencies or infrastructure.
-16. Do not introduce microservices or a separate NestJS API for the MVP.
-17. Do not add features listed as non-goals unless explicitly approved.
-18. Update README and environment variable examples when implementation changes require it.
-19. Do not commit secrets, local environment files, or real user data.
-20. Run lint, type checking, tests, and production build before considering a milestone complete.
-
-### Required implementation order
-
-Implement in this order:
-
-1. Milestone 0 — Project foundation
-2. Milestone 1 — Authentication and membership
-3. Milestone 2 — Music library
-4. Milestone 3 — Plans and plan editor
-5. Milestone 4 — Sharing and collaboration
-6. Milestone 5 — Events and dashboard
-7. Milestone 6 — Hardening and launch
-
-### Definition of done for each milestone
-
-A milestone is complete only when:
-- The relevant user flows work end-to-end.
-- Database migrations are included.
-- RLS policies are included and tested where applicable.
-- Validation and error handling exist.
-- Responsive behavior has been checked.
-- Tests pass.
-- Lint and type checks pass.
-- Documentation is updated.
-- No unrelated functionality has been changed.
-
-### First task for the coding agent
-
-Do not immediately build the entire application.
-
-Start by:
-1. Inspecting the repository.
-2. Confirming the current project state.
-3. Proposing the exact folder structure and dependencies.
-4. Proposing the initial Supabase schema and RLS strategy.
-5. Listing environment variables and setup steps.
-6. Producing a Milestone 0 implementation plan for approval.
-
-Wait for approval before making broad implementation changes.
+1. Inspect the repository before changing it; reuse what exists.
+2. Work milestone by milestone; propose a plan (files, schema, dependencies) before each one.
+3. Use migrations for every schema change; regenerate database types.
+4. RLS on every table, with pgTAP tests for each access rule above.
+5. Never expose the secret key; never add a shared password.
+6. Validate every mutation on the server or in SQL.
+7. Test offline behavior with the network actually turned off, on desktop and mobile sizes.
+8. Don't add non-goals or unnecessary dependencies.
+9. Don't commit secrets, local environment files or real user data.
+10. Run lint, type checks, unit tests, database tests and a production build before calling a
+    milestone done; update the README and docs.
 
 ---
 
-## 17. Open Decisions
+## 17. Defaults
 
-Use sensible defaults unless a decision materially affects security or data integrity. Ask before making irreversible decisions.
-
-| Question | Initial default |
+| Question | Default |
 |---|---|
-| Registration | Invitation-only |
-| Default public link permission | Viewer |
 | PDF maximum size | 20 MB, configurable |
-| Event timezone | Asia/Manila |
+| Church timezone | Asia/Manila |
 | Plan default status | Draft |
-| Music deletion | Archive |
-| Plan duplication | Copy items, not shares |
-| Public link expiration | Optional |
-| Realtime editing | Not in MVP |
-| Multi-church support | Not in MVP |
+| Music deletion | Archive; permanent delete only when unused |
+| Plan duplication | Copies items, not event links |
+| Bulk download | Per plan by default; whole library on request with size shown |
+| Conflict default | None: the member always chooses |
+| Realtime editing | Not included |
+| Multi-church support | Not included |
 
 ---
 
-## 18. Product Success Criteria
+## 18. Success Criteria
 
-The first release is successful when a small group of music ministry members can independently:
+The release is successful when ministry members can, without an account:
 
-1. Sign in.
-2. Find a song in the shared library.
-3. Preview its music sheet.
-4. Create a plan for a service or event.
-5. Add multiple songs.
-6. Reorder the songs.
-7. Share the plan with the band.
-8. Allow another member to edit it.
-9. Open the plan and its PDFs on a phone.
+1. Open Setlist on their phone and find a song.
+2. View its sheet.
+3. Create a plan for a service and reorder its songs.
+4. Make the plan available offline.
+5. Open the plan and every sheet at church with no internet.
+6. Edit a plan offline and see it sync later without losing anyone's changes.
 
-The product should make this workflow easier than coordinating setlists through chat messages and manually sharing PDF files.
+And an administrator can keep the library up to date from any browser.
 
 **Build the simplest reliable version of this workflow first.**
-
----
-
-## 19. Approved Amendments
-
-Approved 2026-11-22 (P9: 2026-11-24). Details and rationale: [`docs/implementation-plan.md`](docs/implementation-plan.md) §7–§8.
-Where an amendment conflicts with an earlier section of this document, the amendment wins.
-
-| # | Amendment | Affects |
-|---|---|---|
-| P1 | PDFs upload directly from the browser to Supabase Storage through a server-issued signed upload URL; the server then validates the stored bytes (`%PDF-` header, `%%EOF` trailer, size) before activating the arrangement. Arrangements gain a `pending` status for uploads not yet validated. | §4.2, §8.1, §9.2 |
-| P2 | Sheet routes authorize the request and redirect to a short-lived signed URL; they never stream PDF bytes through the app server. | §9.3 |
-| P3 | Add `music_pieces.tags text[]`, `arrangements.content_sha256`, and a single-row `app_settings` table (church name, timezone). | §8.1 |
-| P4 | Plan version must match for reorder and title/description edits; adding or removing items increments the version without requiring a match. | §4.3 |
-| P5 | Custom SMTP and a sending domain are required from Milestone 1 (Supabase's built-in email only reaches project team members). | §12, §14 |
-| P6 | Add reset-password and `/auth/confirm` routes; Next.js 16 uses `src/proxy.ts` instead of `middleware.ts`. | §6, §7.5 |
-| P7 | Ambiguity defaults: `published` is a label only; any active member creates events, creator or admin edits/deletes them; events are hard-deleted (associations cascade); archived music stays readable but cannot be added to plans; public links stop working when the owner is inactive; shares survive owner deactivation and an admin transfer-ownership action follows in Milestone 6; anyone who can view a plan can duplicate it; plan owners and editors attach plans to events; event pages show only plans the viewer can access; active members can see member emails for share search; password-based invitation acceptance. | §3, §4, §10 |
-| P8 | Installable through a web app manifest only; no service worker or offline caching. *Superseded in part by P9.* | §1, constitution |
-| P9 | **Offline viewing (approved 2026-11-24).** Plans a member has opened, and the PDF sheets they reference, stay viewable on that device without a connection. Creating, editing, sharing, uploading and admin actions require a connection; while offline the app says so and disables them. Offline copies are removed on sign-out. Built in Milestone 3 with a service worker. Offline editing and sync are out of scope. | §1.3, §4.3, §13, §14 |

@@ -3,7 +3,9 @@
 Music ministry planning: a shared PDF music library, setlists (plans), events and sharing.
 One responsive web app for desktop and mobile, installable from the browser.
 
-- **Requirements:** [`spec.md`](spec.md) is the source of truth; approved amendments are in §19.
+- **Requirements:** [`spec.md`](spec.md) v2.0 (offline-first, no member login) is the source of truth.
+  v1.0 is kept at [`docs/spec-v1.md`](docs/spec-v1.md); the migration rationale is in
+  [`docs/offline-first-assessment.md`](docs/offline-first-assessment.md).
 - **Technical plan:** [`docs/implementation-plan.md`](docs/implementation-plan.md) covers schema, RLS, milestones and cost notes.
 - **Principles:** [`.specify/memory/constitution.md`](.specify/memory/constitution.md).
 
@@ -18,9 +20,13 @@ Storage) · Netlify.
 | 1 | Auth and membership: sign-in, password reset, invitations, member admin | Done |
 | 2 | Music library: PDF upload with server-side checks, search, arrangements, viewer | Done |
 | 3 | Plans: editor with drag and drop, autosave, conflict protection; offline viewing | Done (not deployed) |
-| 4 | Sharing: members as viewer/editor, Shared with Me, view-only links with expiry | Done (not deployed) |
+| 4 | Sharing: members as viewer/editor, Shared with Me, view-only links with expiry | Done (not deployed; removed by spec v2) |
 | 5 | Events (upcoming/past in the church timezone, attach plans) and the dashboard | Done (not deployed) |
-| 6 | Hardening | Next |
+| 6 | Access model: no member login, admin-only library, anonymous devices (spec v2) | Next |
+| 7 | Local data and offline app shell | Planned |
+| 8 | Offline sheets | Planned |
+| 9 | Offline editing and sync | Planned |
+| 10 | Hardening and launch | Planned |
 
 ## Local setup
 
