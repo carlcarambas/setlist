@@ -6,6 +6,7 @@ import { ListMusic } from "lucide-react";
 import { EmptyState } from "@/components/layout/empty-state";
 import { PageHeader } from "@/components/layout/page-header";
 import { LocalSkeleton, OnlineOnly } from "@/components/local/states";
+import { OfflineBadge } from "@/components/offline/offline-badge";
 import { NewPlanForm } from "@/components/plans/new-plan-form";
 import { PlanStatusBadge, relativeTime } from "@/components/plans/plan-status";
 import { Card, CardContent } from "@/components/ui/card";
@@ -59,7 +60,10 @@ export function PlansView() {
                     {p.editorName ? ` by ${p.editorName}` : null}
                   </p>
                 </div>
-                <PlanStatusBadge status={p.status} />
+                <span className="flex items-center gap-2">
+                  <OfflineBadge status={p.offline} />
+                  <PlanStatusBadge status={p.status} />
+                </span>
               </li>
             ))}
           </ul>

@@ -25,8 +25,8 @@ Storage) · Railway.
 | 5 | Events (upcoming/past in the church timezone, attach plans) and the dashboard | Done (not deployed) |
 | 6 | Access model: no member login (anonymous devices + bot check), admin-only library, sharing removed | Done (not deployed) |
 | 7 | Local data and offline app shell: pages read from the device, background sync, precached app | Done (not deployed) |
-| 8 | Offline sheets | Next |
-| 9 | Offline editing and sync | Planned |
+| 8 | Offline sheets: Keep offline per plan (self-updating), per-sheet saving, badges, storage panel, install hint | Done (not deployed) |
+| 9 | Offline editing and sync | Next |
 | 10 | Hardening and launch | Planned |
 
 ## Local setup
@@ -96,8 +96,8 @@ development it would serve stale code).
    npm start
    ```
 
-3. Open the app once (it syncs everything except PDFs). Open a plan to save its sheets on the device
-   ("Available offline on this device").
+3. Open the app once (it syncs everything except PDFs). On a plan, tap **Keep offline** to save its sheets
+   ("Available offline on this device"); Settings → Storage shows what's saved.
 4. Stop the server and the local Supabase (`npm run db:stop`), or turn on airplane mode. Every plan, song
    and event still opens, including ones never opened before; sheets opened earlier still show. Editing
    and admin pages say they need a connection.

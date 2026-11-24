@@ -6,7 +6,9 @@ import { ProfileForm } from "@/components/admin/forms";
 import { adminNav } from "@/components/layout/nav-items";
 import { PageHeader } from "@/components/layout/page-header";
 import { LocalSkeleton, OnlineOnly } from "@/components/local/states";
+import { InstallHint } from "@/components/offline/install-hint";
 import { SignOutButton } from "@/components/offline/sign-out-button";
+import { StoragePanel } from "@/components/offline/storage-panel";
 import { relativeTime } from "@/components/plans/plan-status";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +28,7 @@ export function SettingsView() {
         <LocalSkeleton />
       ) : (
         <div className="grid gap-6">
+          <InstallHint />
           <Card>
             <CardHeader>
               <CardTitle>
@@ -53,6 +56,8 @@ export function SettingsView() {
               </p>
             </CardContent>
           </Card>
+
+          <StoragePanel />
 
           {admin ? (
             <Card>

@@ -1,4 +1,5 @@
 import { PAGE_SIZE, type LibrarySearch } from "@/features/library/schemas";
+import { offlineStatus, type FileIndex, type OfflineStatus, type SheetRef } from "@/features/offline/status";
 import type {
   LocalArrangement,
   LocalEvent,
@@ -113,15 +114,49 @@ export function isPlayable(a: LocalArrangement, piece: LocalPiece | undefined) {
 // Plans
 // ---------------------------------------------------------------------------
 
+/** Offline status of many plans at once (badges in lists), from the sheet index and kept plans. */
+async function plansOffline(db: SetlistDB, planIds: string[]) {
+  const [items, files, kept] = await Promise.all([
+    db.plan_items.where("plan_id").anyOf(planIds).toArray(),
+    db.sheet_files.toArray(),
+    db.kept_plans.toArray(),
+  ]);
+  const arrangements = new Map(
+    (await db.arrangements.bulkGet([...new Set(items.map((i) => i.arrangement_id))]))
+      .filter((a): a is LocalArrangement => Boolean(a))
+      .map((a) => [a.id, a]),
+  );
+  const index: FileIndex = new Map(files.map((f) => [f.arrangement_id, f]));
+  const keptIds = new Set(kept.map((k) => k.plan_id));
+  const sheets = new Map<string, SheetRef[]>();
+  for (const i of items) {
+    const a = arrangements.get(i.arrangement_id);
+    if (!a) continue;
+    const list = sheets.get(i.plan_id) ?? [];
+    list.push({ arrangementId: a.id, version: fileVersion(a), bytes: a.file_size_bytes });
+    sheets.set(i.plan_id, list);
+  }
+  return (planId: string): { offline: OfflineStatus; kept: boolean } => ({
+    offline: offlineStatus(sheets.get(planId) ?? [], index),
+    kept: keptIds.has(planId),
+  });
+}
+
 export async function listPlans(db: SetlistDB, includeArchived: boolean, limit?: number) {
   const [plans, items, names] = await Promise.all([db.plans.toArray(), db.plan_items.toArray(), nameMap(db)]);
   const counts = new Map<string, number>();
   for (const i of items) counts.set(i.plan_id, (counts.get(i.plan_id) ?? 0) + 1);
-  const list = plans
+  const sorted = plans
     .filter((p) => includeArchived || p.status !== "archived")
-    .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
-    .map((p) => ({ ...p, songCount: counts.get(p.id) ?? 0, editorName: names.get(p.updated_by) ?? null }));
-  return limit ? list.slice(0, limit) : list;
+    .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+  const shown = limit ? sorted.slice(0, limit) : sorted;
+  const offline = await plansOffline(db, shown.map((p) => p.id));
+  return shown.map((p) => ({
+    ...p,
+    songCount: counts.get(p.id) ?? 0,
+    editorName: names.get(p.updated_by) ?? null,
+    ...offline(p.id),
+  }));
 }
 
 export type PlanItemView = {
@@ -133,6 +168,7 @@ export type PlanItemView = {
   musicalKey: string | null;
   bpm: number | null;
   fileVersion: string;
+  bytes: number;
   unavailable: boolean;
 };
 
@@ -156,6 +192,7 @@ export async function getPlan(db: SetlistDB, id: string) {
       musicalKey: a?.musical_key ?? null,
       bpm: a?.bpm ?? null,
       fileVersion: a ? fileVersion(a) : "0",
+      bytes: a?.file_size_bytes ?? 0,
       unavailable: !a || !isPlayable(a, piece),
     };
   });
@@ -199,11 +236,12 @@ export async function getEvent(db: SetlistDB, id: string, today: string) {
   const items = await db.plan_items.where("plan_id").anyOf(plans.map((p) => p.id)).toArray();
   const counts = new Map<string, number>();
   for (const i of items) counts.set(i.plan_id, (counts.get(i.plan_id) ?? 0) + 1);
+  const offline = await plansOffline(db, plans.map((p) => p.id));
   return {
     ...event,
     creatorName: names.get(event.created_by) ?? null,
     isPast: event.event_date < today,
-    plans: plans.map((p) => ({ id: p.id, title: p.title, status: p.status, songCount: counts.get(p.id) ?? 0 })),
+    plans: plans.map((p) => ({ id: p.id, title: p.title, status: p.status, songCount: counts.get(p.id) ?? 0, ...offline(p.id) })),
   };
 }
 

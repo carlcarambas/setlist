@@ -67,6 +67,9 @@ async function pull() {
   if (error || !data) throw new Error(error?.message ?? "No data");
   await applyPull(db, data as unknown as PullDocument, since === null);
   await db.meta.put({ key: "self", userId });
+  // Kept plans pick up new or replaced sheets (loaded lazily: only pages that sync need it).
+  const { updateKeptPlans } = await import("@/features/offline/downloads");
+  await updateKeptPlans().catch(() => undefined);
 }
 
 /** Runs a pull now (coalesced with one already running). Resolves when it has finished. */
@@ -110,6 +113,7 @@ function syncIfStale() {
 export function startSync() {
   if (started || typeof window === "undefined") return;
   started = true;
+  void import("@/features/offline/sheets").then(({ reconcileSheetIndex }) => reconcileSheetIndex()).catch(() => undefined);
 
   void localDb()
     .meta.get("sync")

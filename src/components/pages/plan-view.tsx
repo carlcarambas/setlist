@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, CalendarDays, Pencil } from "lucide-react";
 import { LocalSkeleton, NotOnDevice, OnlineOnly } from "@/components/local/states";
+import { KeepOffline } from "@/components/offline/keep-offline";
 import { ArchivePlanButton, DeletePlanButton, DuplicatePlanButton } from "@/components/plans/plan-actions";
 import { PlanSongs } from "@/components/plans/plan-songs";
 import { PlanStatusBadge, relativeTime } from "@/components/plans/plan-status";
@@ -106,6 +107,12 @@ export function PlanView() {
         </p>
       ) : null}
 
+      <KeepOffline
+        planId={plan.id}
+        sheets={plan.items
+          .filter((i) => i.arrangementId)
+          .map((i) => ({ arrangementId: i.arrangementId, version: i.fileVersion, bytes: i.bytes }))}
+      />
       <PlanSongs items={plan.items} />
       <PlanActivity planId={plan.id} version={plan.version} />
     </>

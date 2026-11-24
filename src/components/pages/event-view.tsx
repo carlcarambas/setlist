@@ -7,6 +7,7 @@ import { AttachForm, DeleteEventButton, DetachButton } from "@/components/events
 import { EventDateLine } from "@/components/events/event-list";
 import { EmptyState } from "@/components/layout/empty-state";
 import { LocalSkeleton, NotOnDevice, OnlineOnly } from "@/components/local/states";
+import { OfflineBadge } from "@/components/offline/offline-badge";
 import { PlanStatusBadge } from "@/components/plans/plan-status";
 import { Button } from "@/components/ui/button";
 import { localDb } from "@/features/local-db/db";
@@ -91,6 +92,7 @@ export function EventView() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
+                  <OfflineBadge status={p.offline} />
                   {p.status !== "draft" ? <PlanStatusBadge status={p.status} /> : null}
                   {online ? (
                     <DetachButton eventId={event.id} planId={p.id} label={`Remove ${p.title} from this event`} />

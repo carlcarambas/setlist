@@ -2,32 +2,22 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, CloudCheck, Download, Eye, Pencil, Plus } from "lucide-react";
+import { ArrowLeft, Download, Eye, Pencil, Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { LocalSkeleton, NotOnDevice, OnlineOnly } from "@/components/local/states";
 import { ArchiveToggle } from "@/components/music/edit-forms";
+import { SheetOffline } from "@/components/offline/sheet-offline";
 import { Button } from "@/components/ui/button";
 import { formatFileSize } from "@/features/library/schemas";
 import { localDb } from "@/features/local-db/db";
 import { useIsAdmin } from "@/features/local-db/hooks";
 import { getSong } from "@/features/local-db/queries";
 import { useLiveQuery } from "@/features/local-db/use-live-query";
-import { isSheetSaved } from "@/features/offline/sheets";
 
 export function SongView() {
   const id = useSearchParams().get("id") ?? "";
   const isAdmin = useIsAdmin();
   const piece = useLiveQuery(() => getSong(localDb(), id), [id]);
-  const saved = useLiveQuery(
-    async () => {
-      const song = await getSong(localDb(), id);
-      const entries = await Promise.all(
-        (song?.arrangements ?? []).map(async (a) => [a.id, await isSheetSaved(a.id, a.fileVersion)] as const),
-      );
-      return new Map(entries);
-    },
-    [id],
-  );
 
   const back = (
     <Link href="/library" className="mb-4 inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
@@ -121,17 +111,15 @@ export function SongView() {
                     {a.uploaderName ?? "an administrator"} on{" "}
                     {new Date(a.created_at).toLocaleDateString("en", { dateStyle: "medium" })}
                   </p>
-                  <p className="mt-1 flex flex-wrap gap-2 text-xs">
-                    {a.status === "archived" ? <span className="rounded-full border px-2 py-0.5">Archived</span> : null}
-                    {saved?.get(a.id) ? (
-                      <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5">
-                        <CloudCheck className="size-3" aria-hidden />
-                        On this device
-                      </span>
-                    ) : null}
-                  </p>
+                  {a.status === "archived" ? (
+                    <span className="mt-1 inline-block rounded-full border px-2 py-0.5 text-xs">Archived</span>
+                  ) : null}
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <SheetOffline
+                    sheet={{ arrangementId: a.id, version: a.fileVersion, bytes: a.file_size_bytes }}
+                    title={a.title}
+                  />
                   <Button asChild className="h-11 gap-2">
                     <Link href={`/sheet?id=${a.id}`}>
                       <Eye className="size-4" aria-hidden />

@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Download } from "lucide-react";
 import { LocalSkeleton, NotOnDevice, OnlineOnly } from "@/components/local/states";
 import { SheetViewer } from "@/components/music/sheet-viewer";
+import { OutdatedNote } from "@/components/plans/plan-songs";
 import { Button } from "@/components/ui/button";
 import { localDb } from "@/features/local-db/db";
 import { getSheet } from "@/features/local-db/queries";
@@ -17,14 +18,14 @@ export function SheetView() {
   const id = useSearchParams().get("id") ?? "";
   const sheet = useLiveQuery(() => getSheet(localDb(), id), [id]);
   const version = sheet?.fileVersion;
-  const [file, setFile] = useState<{ key: string; blob?: Blob; error?: true } | null>(null);
+  const [file, setFile] = useState<{ key: string; blob?: Blob; outdated?: boolean; error?: true } | null>(null);
   const key = `${id}:${version}`;
 
   useEffect(() => {
     if (!version) return;
     let cancelled = false;
     loadSheet(id, version)
-      .then((blob) => !cancelled && setFile({ key, blob }))
+      .then(({ blob, outdated }) => !cancelled && setFile({ key, blob, outdated }))
       .catch(() => !cancelled && setFile({ key, error: true }));
     return () => {
       cancelled = true;
@@ -64,7 +65,10 @@ export function SheetView() {
       {!current ? (
         <LocalSkeleton />
       ) : current.blob ? (
-        <SheetViewer file={current.blob} title={`${piece.title} — ${arrangement.title}`} />
+        <>
+          {current.outdated ? <OutdatedNote /> : null}
+          <SheetViewer file={current.blob} title={`${piece.title} — ${arrangement.title}`} />
+        </>
       ) : (
         <p role="alert" className="rounded-lg border border-dashed p-6 text-center text-sm">
           This sheet isn&apos;t saved on this device yet. Open it once while connected.

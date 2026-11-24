@@ -1,44 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, CloudCheck, CloudDownload, Loader2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, CloudCheck, Loader2, X } from "lucide-react";
 import { SheetViewer } from "@/components/music/sheet-viewer";
 import { Button } from "@/components/ui/button";
 import type { PlanItemView } from "@/features/local-db/queries";
-import { loadSheet, saveSheetsForOffline } from "@/features/offline/sheets";
-
-type OfflineState =
-  | { kind: "saving"; saved: number; total: number }
-  | { kind: "saved"; total: number }
-  | { kind: "partial"; saved: number; total: number }
-  | { kind: "idle" };
+import { useFileIndex } from "@/features/offline/hooks";
+import { loadSheet } from "@/features/offline/sheets";
 
 /**
  * The plan as members use it during a service: the ordered song list, each sheet one
- * tap away in a full-screen viewer with previous/next. Opening the plan online saves its
- * sheets on the device for offline use (spec v2 §4.5).
+ * tap away in a full-screen viewer with previous/next. A sheet that's been opened stays on the
+ * device; "Keep offline" (KeepOffline) saves them all (spec v2 §4.5).
  */
 export function PlanSongs({ items }: { items: PlanItemView[] }) {
   const playable = items.filter((i) => i.arrangementId);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
-  const [offline, setOffline] = useState<OfflineState>({ kind: "idle" });
-
-  useEffect(() => {
-    if (!("caches" in window) || !playable.length || !navigator.onLine) return;
-    let cancelled = false;
-    saveSheetsForOffline(
-      playable.map((i) => ({ arrangementId: i.arrangementId, version: i.fileVersion })),
-      (saved, total) => !cancelled && setOffline({ kind: "saving", saved, total }),
-    ).then(({ saved, failed, total }) => {
-      if (cancelled) return;
-      setOffline(failed ? { kind: "partial", saved, total } : { kind: "saved", total });
-    });
-    return () => {
-      cancelled = true;
-    };
-    // Re-run only when the set of sheets changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playable.map((i) => `${i.arrangementId}:${i.fileVersion}`).join(",")]);
+  const files = useFileIndex();
 
   if (items.length === 0) {
     return (
@@ -50,7 +28,6 @@ export function PlanSongs({ items }: { items: PlanItemView[] }) {
 
   return (
     <>
-      <OfflineStatus state={offline} />
       <ol className="divide-y rounded-lg border">
         {items.map((item, index) => (
           <li key={item.id} className="flex items-center gap-3 p-3 sm:p-4">
@@ -69,6 +46,9 @@ export function PlanSongs({ items }: { items: PlanItemView[] }) {
               </p>
               {item.notes ? <p className="mt-1 text-sm whitespace-pre-line">{item.notes}</p> : null}
             </div>
+            {files?.has(item.arrangementId) ? (
+              <CloudCheck className="size-4 shrink-0 text-muted-foreground" aria-label="On this device" />
+            ) : null}
             <Button
               className="h-11 shrink-0"
               onClick={() => setOpenIndex(playable.findIndex((p) => p.id === item.id))}
@@ -92,35 +72,6 @@ export function PlanSongs({ items }: { items: PlanItemView[] }) {
   );
 }
 
-function OfflineStatus({ state }: { state: OfflineState }) {
-  const base = "mb-3 flex items-center gap-2 text-sm text-muted-foreground";
-  switch (state.kind) {
-    case "saving":
-      return (
-        <p role="status" className={base}>
-          <Loader2 className="size-4 animate-spin" aria-hidden />
-          Saving sheets for offline use… {state.saved}/{state.total}
-        </p>
-      );
-    case "saved":
-      return (
-        <p role="status" className={base}>
-          <CloudCheck className="size-4" aria-hidden />
-          Available offline on this device
-        </p>
-      );
-    case "partial":
-      return (
-        <p role="status" className={base}>
-          <CloudDownload className="size-4" aria-hidden />
-          {state.saved} of {state.total} sheets saved for offline use. Open this plan again while online to finish.
-        </p>
-      );
-    default:
-      return null;
-  }
-}
-
 function SheetDialog({
   items,
   index,
@@ -134,7 +85,7 @@ function SheetDialog({
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const item = items[index];
-  const [sheet, setSheet] = useState<{ id: string; file: Blob } | { id: string; error: true } | null>(null);
+  const [sheet, setSheet] = useState<{ id: string; file: Blob; outdated: boolean } | { id: string; error: true } | null>(null);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -144,7 +95,7 @@ function SheetDialog({
   useEffect(() => {
     let cancelled = false;
     loadSheet(item.arrangementId, item.fileVersion)
-      .then((file) => !cancelled && setSheet({ id: item.id, file }))
+      .then(({ blob, outdated }) => !cancelled && setSheet({ id: item.id, file: blob, outdated }))
       .catch(() => !cancelled && setSheet({ id: item.id, error: true }));
     return () => {
       cancelled = true;
@@ -210,11 +161,22 @@ function SheetDialog({
                 This sheet isn&apos;t available offline yet. Open it once while connected.
               </p>
             ) : (
-              <SheetViewer key={item.id} file={current.file} title={`${item.songTitle} — ${item.arrangementTitle}`} />
+              <>
+                {current.outdated ? <OutdatedNote /> : null}
+                <SheetViewer key={item.id} file={current.file} title={`${item.songTitle} — ${item.arrangementTitle}`} />
+              </>
             )}
           </div>
         </div>
       </div>
     </dialog>
+  );
+}
+
+export function OutdatedNote() {
+  return (
+    <p role="status" className="mb-3 rounded-md border p-3 text-sm">
+      Older version: this sheet was replaced since it was saved. The new one downloads when you&apos;re online.
+    </p>
   );
 }

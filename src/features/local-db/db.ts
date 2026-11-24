@@ -77,6 +77,21 @@ export type LocalProfile = {
 
 export type LocalSettings = { church_name: string; timezone: string; updated_at: string };
 
+/**
+ * A PDF saved on this device (bytes in Cache Storage "setlist-sheets-v1"). `pinned` = the member
+ * saved or opened this sheet on its own; unpinned ones are only there for a kept plan.
+ */
+export type LocalSheetFile = {
+  arrangement_id: string;
+  version: string;
+  bytes: number;
+  saved_at: string;
+  pinned: boolean;
+};
+
+/** A plan this device keeps available offline (spec v2 §4.5 OFF-04). Device-only; never synced. */
+export type KeptPlan = { plan_id: string; kept_at: string };
+
 /** Key-value rows: "sync" (cursor, lastSyncedAt), "settings" (value), "self" (userId). */
 export type MetaRow = {
   key: "sync" | "settings" | "self";
@@ -114,6 +129,8 @@ export class SetlistDB extends Dexie {
   event_plans!: EntityTable<LocalEventPlan, "id">;
   profiles!: EntityTable<LocalProfile, "id">;
   meta!: EntityTable<MetaRow, "key">;
+  sheet_files!: EntityTable<LocalSheetFile, "arrangement_id">;
+  kept_plans!: EntityTable<KeptPlan, "plan_id">;
 
   constructor(name = "setlist") {
     super(name);
@@ -126,6 +143,11 @@ export class SetlistDB extends Dexie {
       event_plans: "id, event_id, plan_id",
       profiles: "id",
       meta: "key",
+    });
+    // Milestone 8: index of saved sheets, and plans kept offline on this device.
+    this.version(2).stores({
+      sheet_files: "arrangement_id",
+      kept_plans: "plan_id",
     });
   }
 }

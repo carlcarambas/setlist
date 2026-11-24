@@ -6,6 +6,8 @@ import { CalendarDays, ListMusic, Music, Plus, Upload } from "lucide-react";
 import { EventDateLine } from "@/components/events/event-list";
 import { PageHeader } from "@/components/layout/page-header";
 import { LocalSkeleton, OnlineOnly } from "@/components/local/states";
+import { InstallHint } from "@/components/offline/install-hint";
+import { OfflineBadge } from "@/components/offline/offline-badge";
 import { relativeTime } from "@/components/plans/plan-status";
 import { Button } from "@/components/ui/button";
 import { localDb } from "@/features/local-db/db";
@@ -54,6 +56,7 @@ export function DashboardView() {
           </OnlineOnly>
         }
       />
+      <InstallHint />
       {data === undefined ? (
         <LocalSkeleton />
       ) : (
@@ -68,7 +71,7 @@ export function DashboardView() {
           </Widget>
           <Widget id="plans" title="Recently updated plans" icon={ListMusic} href="/plans" empty="No plans yet.">
             {data.plans.map((p) => (
-              <Row key={p.id} href={`/plan?id=${p.id}`} title={p.title}>
+              <Row key={p.id} href={`/plan?id=${p.id}`} title={p.title} badge={<OfflineBadge status={p.offline} />}>
                 {p.songCount} {p.songCount === 1 ? "song" : "songs"} · updated {relativeTime(p.updated_at)}
               </Row>
             ))}
@@ -121,12 +124,15 @@ function Widget({
   );
 }
 
-function Row({ href, title, children }: { href: string; title: string; children: ReactNode }) {
+function Row({ href, title, badge, children }: { href: string; title: string; badge?: ReactNode; children: ReactNode }) {
   return (
     <li className="relative px-4 py-3 hover:bg-accent/50">
-      <Link href={href} className="font-medium after:absolute after:inset-0">
-        {title}
-      </Link>
+      <div className="flex items-center justify-between gap-2">
+        <Link href={href} className="font-medium after:absolute after:inset-0">
+          {title}
+        </Link>
+        {badge}
+      </div>
       <p className="text-sm text-muted-foreground">{children}</p>
     </li>
   );
