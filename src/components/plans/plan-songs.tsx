@@ -23,14 +23,27 @@ type OfflineState =
  * The plan as members use it during a service: the ordered song list, each sheet one
  * tap away in a full-screen viewer with previous/next. Opening the plan saves its
  * sheets for offline use (spec §19 P9).
+ *
+ * Public share links pass `sheetBasePath` (e.g. /share/<token>/sheets): sheets then load
+ * from there and nothing is saved on the device.
  */
-export function PlanSongs({ planId, planTitle, items }: { planId: string; planTitle: string; items: PlanItemView[] }) {
+export function PlanSongs({
+  planId,
+  planTitle,
+  items,
+  sheetBasePath,
+}: {
+  planId: string;
+  planTitle: string;
+  items: PlanItemView[];
+  sheetBasePath?: string;
+}) {
   const playable = items.filter((i) => i.arrangementId);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [offline, setOffline] = useState<OfflineState>({ kind: "idle" });
 
   useEffect(() => {
-    if (!("caches" in window) || !playable.length || !navigator.onLine) return;
+    if (sheetBasePath || !("caches" in window) || !playable.length || !navigator.onLine) return;
     let cancelled = false;
     saveSheetsForOffline(
       playable.map((i) => ({ arrangementId: i.arrangementId, version: i.fileVersion })),
@@ -92,7 +105,13 @@ export function PlanSongs({ planId, planTitle, items }: { planId: string; planTi
         ))}
       </ol>
       {openIndex !== null ? (
-        <SheetDialog items={playable} index={openIndex} onIndexChange={setOpenIndex} onClose={() => setOpenIndex(null)} />
+        <SheetDialog
+          items={playable}
+          index={openIndex}
+          onIndexChange={setOpenIndex}
+          onClose={() => setOpenIndex(null)}
+          sheetBasePath={sheetBasePath}
+        />
       ) : null}
     </>
   );
@@ -132,11 +151,13 @@ function SheetDialog({
   index,
   onIndexChange,
   onClose,
+  sheetBasePath,
 }: {
   items: PlanItemView[];
   index: number;
   onIndexChange: (index: number) => void;
   onClose: () => void;
+  sheetBasePath?: string;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const item = items[index];
@@ -149,13 +170,19 @@ function SheetDialog({
 
   useEffect(() => {
     let cancelled = false;
-    loadSheet(item.arrangementId, item.fileVersion)
+    const load = sheetBasePath
+      ? fetch(`${sheetBasePath}/${item.arrangementId}`).then((r) => {
+          if (!r.ok) throw new Error(`Sheet unavailable (${r.status})`);
+          return r.blob();
+        })
+      : loadSheet(item.arrangementId, item.fileVersion);
+    load
       .then((file) => !cancelled && setSheet({ id: item.id, file }))
       .catch(() => !cancelled && setSheet({ id: item.id, error: true }));
     return () => {
       cancelled = true;
     };
-  }, [item.id, item.arrangementId, item.fileVersion]);
+  }, [item.id, item.arrangementId, item.fileVersion, sheetBasePath]);
 
   const go = useCallback(
     (delta: number) => {
@@ -213,7 +240,9 @@ function SheetDialog({
               </p>
             ) : "error" in current ? (
               <p role="alert" className="flex min-h-48 items-center justify-center text-center text-sm">
-                This sheet isn&apos;t available offline yet. Open it once while connected.
+                {sheetBasePath
+                  ? "This sheet couldn't be loaded. The link may have expired or been revoked."
+                  : "This sheet isn't available offline yet. Open it once while connected."}
               </p>
             ) : (
               <SheetViewer key={item.id} file={current.file} title={`${item.songTitle} — ${item.arrangementTitle}`} />

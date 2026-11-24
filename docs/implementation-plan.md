@@ -519,6 +519,26 @@ running local app.
   `import()` calls of the same module can be split into different chunks. Both are handled.
 - Sign-out removes plan pages, sheets and the saved-plans list; app code and the offline page stay.
 
+**Milestone 4 notes (as built):**
+- `can_view_plan()` / `can_edit_plan()` now include `plan_shares`. Everything from Milestone 3 (RLS,
+  edit functions, the editor) picked this up unchanged; viewers get `not_allowed` (403).
+- `bump_plan_version()` checks access before `SELECT … FOR UPDATE`: that statement only returns rows
+  that pass the UPDATE policy, so a viewer would otherwise see "plan not found".
+- Shares and links are written only through four owner-only `SECURITY DEFINER` functions
+  (`share_plan`, `revoke_plan_share`, `create_plan_link`, `revoke_plan_link`) that also record
+  activity. Signed-in users have no write privileges on either table and can never read
+  `plan_links.token_hash`.
+- Public links: the server checks the token's shape, hashes it and calls `get_shared_plan()` /
+  `shared_plan_sheet()` with the secret key; only `service_role` may execute them. They return only
+  what the page shows (no member ids, emails or storage paths) and apply every rule in SQL, so the
+  pgTAP tests cover revoked, expired, archived-plan, inactive-owner and unused-sheet cases.
+- `/share/*` responses send `Referrer-Policy: no-referrer`, `X-Robots-Tag: noindex` and
+  `Cache-Control: private, no-store`. Public pages don't save anything for offline use.
+- The link is built in the browser from the current address, so it works on any host without
+  depending on `NEXT_PUBLIC_SITE_URL`.
+- Known limit: a member whose access is removed keeps any offline copy already on their device until
+  they sign out (the server stops serving the plan immediately).
+
 ### Milestone 4 — Sharing
 - Migration: `plan_shares`, `plan_links`, plus pgTAP tests (including the anonymous role having zero access).
 - Share dialog:

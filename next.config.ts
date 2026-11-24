@@ -26,6 +26,16 @@ const nextConfig: NextConfig = {
           { key: "Content-Type", value: "application/javascript; charset=utf-8" },
         ],
       },
+      {
+        // Public share links carry their token in the URL: never leak it to other sites
+        // through the Referer header, and keep the pages out of search engines and caches.
+        source: "/share/:path*",
+        headers: [
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+          { key: "Cache-Control", value: "private, no-store" },
+        ],
+      },
     ];
   },
   async redirects() {

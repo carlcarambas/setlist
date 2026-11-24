@@ -18,8 +18,9 @@ Storage) · Netlify.
 | 1 | Auth and membership: sign-in, password reset, invitations, member admin | Done |
 | 2 | Music library: PDF upload with server-side checks, search, arrangements, viewer | Done |
 | 3 | Plans: editor with drag and drop, autosave, conflict protection; offline viewing | Done (not deployed) |
-| 4 | Sharing and collaboration | Next |
-| 5–6 | Events, dashboard, hardening | Planned |
+| 4 | Sharing: members as viewer/editor, Shared with Me, view-only links with expiry | Done (not deployed) |
+| 5 | Events and dashboard | Next |
+| 6 | Hardening | Planned |
 
 ## Local setup
 

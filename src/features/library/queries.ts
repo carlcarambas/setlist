@@ -1,5 +1,7 @@
 import "server-only";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database";
 import { escapeLike, PAGE_SIZE, type LibrarySearch } from "./schemas";
 import { SHEETS_BUCKET, SIGNED_URL_TTL_SECONDS } from "./storage";
 
@@ -72,8 +74,12 @@ export async function getArrangement(id: string) {
  * A short-lived URL for an arrangement's PDF, created as the signed-in user so Storage
  * RLS applies. `download` sets the saved file name.
  */
-export async function signedSheetUrl(storagePath: string, download?: string) {
-  const supabase = await createClient();
+/**
+ * Short-lived signed URL for a sheet. Uses the member's session unless a client is
+ * given (public share links pass the secret-key client after validating the link).
+ */
+export async function signedSheetUrl(storagePath: string, download?: string, client?: SupabaseClient<Database>) {
+  const supabase = client ?? (await createClient());
   const { data, error } = await supabase.storage
     .from(SHEETS_BUCKET)
     .createSignedUrl(storagePath, SIGNED_URL_TTL_SECONDS);

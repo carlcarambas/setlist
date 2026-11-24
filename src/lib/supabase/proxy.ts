@@ -12,7 +12,8 @@ import type { Database } from "@/types/database";
  */
 
 // Reachable without a session. Everything else requires one.
-const PUBLIC_PREFIXES = ["/sign-in", "/reset-password", "/auth/", "/offline"];
+// /share/ is a view-only public link: the token is validated on the server.
+const PUBLIC_PREFIXES = ["/sign-in", "/reset-password", "/auth/", "/offline", "/share/"];
 
 function isPublic(pathname: string) {
   return PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix));
