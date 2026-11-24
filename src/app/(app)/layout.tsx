@@ -1,29 +1,9 @@
 import { Suspense } from "react";
-import Link from "next/link";
-import { Settings } from "lucide-react";
+import { SessionWatcher, SidebarMember } from "@/components/layout/app-frame";
 import { Brand } from "@/components/layout/brand";
-import { MemberMenu } from "@/components/layout/member-menu";
 import { MobileTabBar, MobileTabBarLinks } from "@/components/layout/mobile-tab-bar";
-import { SidebarNav, SidebarNavLinks } from "@/components/layout/sidebar-nav";
-import { requireActiveMember } from "@/lib/auth/member";
-
-// Only active members get past these components; RLS enforces the same rule on the data.
-async function ActiveMemberContent({ children }: { children: React.ReactNode }) {
-  await requireActiveMember();
-  return children;
-}
-
-async function MemberSidebar() {
-  const member = await requireActiveMember();
-  return (
-    <>
-      <SidebarNav isAdmin={member.role === "admin"} />
-      <div className="mt-auto">
-        <MemberMenu member={member} />
-      </div>
-    </>
-  );
-}
+import { SidebarNavLinks } from "@/components/layout/sidebar-nav";
+import { SyncStatusBar } from "@/components/layout/sync-status";
 
 function ContentSkeleton() {
   return (
@@ -34,6 +14,12 @@ function ContentSkeleton() {
   );
 }
 
+/**
+ * Static app frame: nothing here reads the session on the server, so member pages are prerendered,
+ * identical for everyone, and cached by the service worker for offline use (spec v2 §4.5, §7.4).
+ * Who-is-this-device details come from the local database. The proxy sends visitors without a
+ * session to /welcome, server-rendered admin pages check the role themselves, and RLS guards data.
+ */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[15rem_1fr]">
@@ -49,31 +35,28 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <Brand />
         </div>
         <Suspense fallback={<SidebarNavLinks isAdmin={false} />}>
-          <MemberSidebar />
+          <SidebarMember />
         </Suspense>
       </aside>
 
       <div className="flex min-h-dvh flex-col">
         <header className="sticky top-0 z-30 flex items-center justify-between border-b bg-background/95 px-4 pt-[env(safe-area-inset-top)] backdrop-blur md:hidden">
-          <Brand />
-          <Link
-            href="/settings"
-            aria-label="Settings"
-            className="flex size-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent"
-          >
-            <Settings className="size-5" aria-hidden />
-          </Link>
+          <div className="flex min-h-14 items-center">
+            <Brand />
+          </div>
         </header>
 
+        <SyncStatusBar />
         <main id="main" className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-24 md:px-8 md:pb-10">
-          <Suspense fallback={<ContentSkeleton />}>
-            <ActiveMemberContent>{children}</ActiveMemberContent>
-          </Suspense>
+          <Suspense fallback={<ContentSkeleton />}>{children}</Suspense>
         </main>
       </div>
 
       <Suspense fallback={<MobileTabBarLinks />}>
         <MobileTabBar />
+      </Suspense>
+      <Suspense>
+        <SessionWatcher />
       </Suspense>
     </div>
   );

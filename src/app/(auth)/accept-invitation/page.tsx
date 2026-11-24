@@ -13,12 +13,12 @@ async function Invitation() {
   if (!member) redirect("/sign-in?error=link");
   if (member.status === "active") redirect("/dashboard");
   if (member.status === "inactive") redirect("/auth/sign-out?reason=inactive");
-  return <AcceptInvitationForm email={member.email} defaultName={member.display_name} />;
+  return <AcceptInvitationForm email={member.email ?? ""} defaultName={member.display_name ?? ""} />;
 }
 
 export default function AcceptInvitationPage() {
   return (
-    <AuthCard title="Welcome to Setlist" description="Set your name and a password to finish joining.">
+    <AuthCard title="Become an administrator" description="Set your name and a password to finish joining.">
       <Suspense fallback={<FormSkeleton />}>
         <Invitation />
       </Suspense>

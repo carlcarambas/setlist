@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { arrangementSchema, escapeLike, fileSchema, librarySearchSchema, pieceSchema } from "./schemas";
+import { arrangementSchema, fileSchema, librarySearchSchema, pieceSchema } from "./schemas";
 
 describe("pieceSchema", () => {
   it("normalizes tags and blanks", () => {
@@ -44,8 +44,3 @@ describe("librarySearchSchema", () => {
   });
 });
 
-describe("escapeLike", () => {
-  it("escapes wildcards", () => {
-    expect(escapeLike("50%_off\\")).toBe("50\\%\\_off\\\\");
-  });
-});

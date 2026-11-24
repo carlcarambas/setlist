@@ -1,0 +1,61 @@
+# Weekly backup of the production Supabase project (spec §9, §12; runbook: docs/runbook.md).
+# Database data (public + auth schemas) and every sheet PDF, encrypted with BACKUP_PASSPHRASE and kept
+# as a workflow artifact for 90 days. Run it by hand from the Actions tab before risky changes.
+#
+# Repository secrets (Settings → Secrets and variables → Actions):
+#   SUPABASE_DB_URL      Postgres connection string (Supabase → Connect → Session pooler), with password
+#   SUPABASE_URL         https://<project-ref>.supabase.co
+#   SUPABASE_SECRET_KEY  sb_secret_… (server key)
+#   BACKUP_PASSPHRASE    a long random passphrase; store it in your password manager too
+name: Backup
+
+on:
+  schedule:
+    - cron: "0 20 * * 0" # Sundays 20:00 UTC = Mondays 04:00 in Manila
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Dump database data (public and auth)
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          mkdir -p backup
+          npx supabase db dump --remote="$SUPABASE_DB_URL" --data-only --use-copy -s public,auth -f backup/data.sql
+          echo "$GITHUB_SHA" > backup/commit.txt
+
+      - name: Copy sheet files
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: node scripts/backup-storage.mjs backup/storage
+
+      - name: Encrypt
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          test -n "$BACKUP_PASSPHRASE"
+          tar -czf setlist-backup.tar.gz backup
+          gpg --batch --yes --symmetric --cipher-algo AES256 --passphrase "$BACKUP_PASSPHRASE" \
+            -o setlist-backup.tar.gz.gpg setlist-backup.tar.gz
+          rm -rf backup setlist-backup.tar.gz
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: setlist-backup-${{ github.run_number }}
+          path: setlist-backup.tar.gz.gpg
+          retention-days: 90
+          if-no-files-found: error

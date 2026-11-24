@@ -1,17 +1,8 @@
 import type { Metadata } from "next";
-import { ListMusic } from "lucide-react";
-import { EmptyState } from "@/components/layout/empty-state";
-import { PageHeader } from "@/components/layout/page-header";
+import { PlansView } from "@/components/pages/plans-view";
 
-export const metadata: Metadata = { title: "My Plans" };
+export const metadata: Metadata = { title: "Plans" };
 
-export default function Page() {
-  return (
-    <>
-      <PageHeader title="My Plans" description="Setlists you own." />
-      <EmptyState icon={ListMusic} title="No plans yet">
-        Coming in Milestone 3.
-      </EmptyState>
-    </>
-  );
+export default function PlansPage() {
+  return <PlansView />;
 }

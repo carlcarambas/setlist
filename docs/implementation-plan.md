@@ -1,5 +1,9 @@
 # Setlist — Initial Technical Plan (for approval)
 
+> **Note (2026-11-24):** this plan was written for spec v1.0 and covers Milestones 0–5 as built. Spec v2.0
+> (offline-first, no member login) replaced v1.0; its milestones 6–10 get their own plans. Where this
+> document and `spec.md` v2.0 disagree, `spec.md` wins.
+
 **Status:** Proposal. No application code has been written.
 **Source of truth:** [`spec.md`](../spec.md) v1.0 (2026-11-22). Anything here that differs from the spec is
 listed under [§8 Proposed spec changes](#8-proposed-spec-changes) and is not applied until approved.
@@ -502,6 +506,52 @@ running local app.
     install the app.
   - Cost: sheets are downloaded once per device per version, which adds Supabase egress roughly
     proportional to plans opened. Still well within the free tier at this ministry's size.
+
+**Milestone 3 notes (as built):**
+- Plan reads and writes go through RLS; every edit goes through a `SECURITY INVOKER` function that
+  locks the plan row, checks access and (for reorder, title/description and notes) the expected
+  version. Errors use PostgREST `PTxxx` codes (404/403/409/422/423).
+- The plan read policy checks `owner_id` on the row as well as `can_view_plan()`, because the helper
+  can't see a row inside its own `INSERT … RETURNING`.
+- The editor runs edits one at a time in a queue, updates the screen immediately, and rolls back on
+  failure. A version conflict stops editing and asks for a reload, without overwriting.
+- Drag and drop works with mouse, touch (drag handle) and keyboard, with spoken announcements that
+  use song names.
+- Offline (spec P9): `public/sw.js` keeps app code and the offline page; the plan page saves its own
+  HTML, its sheets, the PDF viewer code and every script it loaded. Two pitfalls found in testing:
+  files the browser serves from its memory cache never reach the service worker, and two separate
+  `import()` calls of the same module can be split into different chunks. Both are handled.
+- Sign-out removes plan pages, sheets and the saved-plans list; app code and the offline page stay.
+
+**Milestone 4 notes (as built):**
+- `can_view_plan()` / `can_edit_plan()` now include `plan_shares`. Everything from Milestone 3 (RLS,
+  edit functions, the editor) picked this up unchanged; viewers get `not_allowed` (403).
+- `bump_plan_version()` checks access before `SELECT … FOR UPDATE`: that statement only returns rows
+  that pass the UPDATE policy, so a viewer would otherwise see "plan not found".
+- Shares and links are written only through four owner-only `SECURITY DEFINER` functions
+  (`share_plan`, `revoke_plan_share`, `create_plan_link`, `revoke_plan_link`) that also record
+  activity. Signed-in users have no write privileges on either table and can never read
+  `plan_links.token_hash`.
+- Public links: the server checks the token's shape, hashes it and calls `get_shared_plan()` /
+  `shared_plan_sheet()` with the secret key; only `service_role` may execute them. They return only
+  what the page shows (no member ids, emails or storage paths) and apply every rule in SQL, so the
+  pgTAP tests cover revoked, expired, archived-plan, inactive-owner and unused-sheet cases.
+- `/share/*` responses send `Referrer-Policy: no-referrer`, `X-Robots-Tag: noindex` and
+  `Cache-Control: private, no-store`. Public pages don't save anything for offline use.
+- The link is built in the browser from the current address, so it works on any host without
+  depending on `NEXT_PUBLIC_SITE_URL`.
+- Known limit: a member whose access is removed keeps any offline copy already on their device until
+  they sign out (the server stops serving the plan immediately).
+
+**Milestone 5 notes (as built):**
+- Events and associations use plain RLS-protected writes (no database functions). `created_by` is not
+  in the insert grant, so it always defaults to the session user.
+- Attaching requires `can_edit_plan()`, an existing event and a non-archived plan; detaching requires
+  `can_edit_plan()`. Event creators can't detach other members' plans from their event.
+- "Today" is computed on the server with `Intl` in `app_settings.timezone`; an event moves to Past
+  the day after its date. Dates are plain calendar dates and are formatted in UTC so they never shift.
+- Deleting an event asks for confirmation; associations cascade and plans are untouched.
+- Not built: EVT-09 (duplicate an event, a "Could"). No activity entries for attach/detach.
 
 ### Milestone 4 — Sharing
 - Migration: `plan_shares`, `plan_links`, plus pgTAP tests (including the anonymous role having zero access).

@@ -8,9 +8,10 @@ import { PageHeader } from "@/components/layout/page-header";
 import { SectionSkeleton } from "@/components/layout/section-skeleton";
 import { ArchiveToggle, ArrangementForm, ReplaceFileForm } from "@/components/music/edit-forms";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatFileSize, getArrangement } from "@/features/library/queries";
+import { getArrangement } from "@/features/library/queries";
+import { formatFileSize } from "@/features/library/schemas";
 import { publicEnv } from "@/lib/env";
-import { requireActiveMember } from "@/lib/auth/member";
+import { requireAdmin } from "@/lib/auth/member";
 
 export const metadata: Metadata = { title: "Edit arrangement" };
 
@@ -25,7 +26,7 @@ export default function EditArrangementPage({ params }: Props) {
 }
 
 async function EditArrangement({ params }: Pick<Props, "params">) {
-  await requireActiveMember();
+  await requireAdmin();
   const id = z.uuid().safeParse((await params).arrangementId);
   if (!id.success) notFound();
   const arrangement = await getArrangement(id.data);
@@ -35,7 +36,7 @@ async function EditArrangement({ params }: Pick<Props, "params">) {
   return (
     <>
       <Link
-        href={`/library/${arrangement.piece.id}`}
+        href={`/song?id=${arrangement.piece.id}`}
         className="mb-4 inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="size-4" aria-hidden />

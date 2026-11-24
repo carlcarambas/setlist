@@ -9,12 +9,12 @@ import {
   type FormState,
 } from "@/features/auth/form-state";
 import { appSettingsSchema } from "@/features/auth/schemas";
-import { getCurrentMember } from "@/lib/auth/member";
+import { getCurrentMember, isAdmin } from "@/lib/auth/member";
 import { createClient } from "@/lib/supabase/server";
 
 export async function updateAppSettings(_prev: FormState, formData: FormData): Promise<FormState> {
   const member = await getCurrentMember();
-  if (member?.status !== "active" || member.role !== "admin") {
+  if (!isAdmin(member)) {
     return formError("Only administrators can change settings.", keptValues(formData));
   }
 

@@ -10,19 +10,20 @@ import {
   validationError,
   type FormState,
 } from "@/features/auth/form-state";
-import { getCurrentMember } from "@/lib/auth/member";
+import { getCurrentMember, isAdmin } from "@/lib/auth/member";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { looksLikePdf } from "./pdf-check";
 import { arrangementSchema, fileSchema, pieceSchema } from "./schemas";
 import { maxUploadBytes, readObjectEdges, sheetPath, SHEETS_BUCKET } from "./storage";
 
+// Every action here changes the library: administrators only (spec v2 §4.2). RLS enforces it too.
 async function activeMember() {
   const member = await getCurrentMember();
-  return member?.status === "active" ? member : null;
+  return isAdmin(member) ? member : null;
 }
 
-const NOT_SIGNED_IN = "Your session has ended. Sign in again to continue.";
+const NOT_SIGNED_IN = "Only administrators can change the library. Sign in as an administrator to continue.";
 
 // ---------------------------------------------------------------------------
 // Duplicate check (LIB-13): advisory only, never blocks an upload.
@@ -325,7 +326,7 @@ export async function updatePiece(_prev: FormState, formData: FormData): Promise
     .select("id");
   if (error || !data?.length) return formError("Changes couldn't be saved. Please try again.", keptValues(formData));
 
-  redirect(`/library/${id.data}`);
+  redirect(`/song?id=${id.data}`);
 }
 
 export async function updateArrangement(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -376,8 +377,7 @@ export async function setArrangementStatus(formData: FormData): Promise<void> {
 // Admin: remove uploads that were started but never finished (plan §4.5)
 // ---------------------------------------------------------------------------
 export async function cleanupStaleUploads(): Promise<void> {
-  const member = await activeMember();
-  if (member?.role !== "admin") return;
+  if (!(await activeMember())) return;
 
   const admin = createAdminClient();
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();

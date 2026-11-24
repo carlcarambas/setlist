@@ -5,7 +5,7 @@ import { SectionSkeleton } from "@/components/layout/section-skeleton";
 import { UploadForm } from "@/components/music/upload-form";
 import { listCategories } from "@/features/library/queries";
 import { publicEnv } from "@/lib/env";
-import { requireActiveMember } from "@/lib/auth/member";
+import { requireAdmin } from "@/lib/auth/member";
 
 export const metadata: Metadata = { title: "Add music" };
 
@@ -21,7 +21,7 @@ export default function NewMusicPage() {
 }
 
 async function NewMusicForm() {
-  await requireActiveMember();
+  await requireAdmin();
   const categories = await listCategories();
   return <UploadForm maxMb={publicEnv().NEXT_PUBLIC_MAX_UPLOAD_MB} categories={categories} />;
 }

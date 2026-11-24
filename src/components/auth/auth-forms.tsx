@@ -11,11 +11,12 @@ import {
 } from "@/features/auth/actions";
 import { initialFormState, type FormState } from "@/features/auth/form-state";
 import { Field, FormMessage, SubmitButton } from "./form-parts";
+import { TurnstileField } from "./turnstile";
 
 const NOTICES: Record<string, FormState> = {
   inactive: {
     status: "error",
-    message: "Your account has been deactivated. Contact a ministry administrator.",
+    message: "This device or account has been blocked. Contact a ministry administrator.",
   },
   link: { status: "error", message: "That link is invalid or has expired. Request a new one." },
 };
@@ -47,6 +48,7 @@ export function SignInForm() {
         required
         errors={state.fieldErrors?.password}
       />
+      <TurnstileField resetKey={state} />
       <SubmitButton pendingText="Signing in…">Sign in</SubmitButton>
       <Link href="/reset-password" className="text-center text-sm underline underline-offset-4">
         Forgot your password?
@@ -69,6 +71,7 @@ export function ResetRequestForm() {
         required
         errors={state.fieldErrors?.email}
       />
+      <TurnstileField resetKey={state} />
       <SubmitButton pendingText="Sending…">Send reset link</SubmitButton>
       <Link href="/sign-in" className="text-center text-sm underline underline-offset-4">
         Back to sign in

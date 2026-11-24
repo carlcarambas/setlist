@@ -5,13 +5,11 @@ import { Document, Page, pdfjs } from "react-pdf";
 import { AlertCircle } from "lucide-react";
 
 // Must be set in the same module that renders <Document> (react-pdf README).
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.mjs",
-  import.meta.url,
-).toString();
+export const workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
+pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
 /** Renders every page at the container's width. Text/annotation layers are off: sheet music doesn't need them. */
-export default function PdfViewer({ url, title }: { url: string; title: string }) {
+export default function PdfViewer({ file, title }: { file: string | Blob; title: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState<number>();
   const [pageCount, setPageCount] = useState(0);
@@ -27,7 +25,7 @@ export default function PdfViewer({ url, title }: { url: string; title: string }
   return (
     <div ref={containerRef} className="w-full">
       <Document
-        file={url}
+        file={file}
         onLoadSuccess={({ numPages }) => setPageCount(numPages)}
         loading={<ViewerMessage>Loading sheet…</ViewerMessage>}
         error={

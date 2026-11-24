@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ServiceWorker } from "@/components/offline/service-worker";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -20,6 +21,8 @@ export const metadata: Metadata = {
   },
   description: "Plan the music. Share the setlist. Serve together.",
   applicationName: "Setlist",
+  // Reachable by anyone with the address, but not meant to be found (spec v2 §10).
+  robots: { index: false, follow: false },
   appleWebApp: {
     capable: true,
     title: "Setlist",
@@ -43,6 +46,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full">
         {children}
         <Toaster />
+        <ServiceWorker />
       </body>
     </html>
   );

@@ -7,12 +7,13 @@ import type { Database } from "@/types/database";
  * Refreshes the Supabase session cookie before the request reaches the app, so Server
  * Components (which can't write cookies) always see a valid session.
  *
- * It also sends signed-out visitors to /sign-in. That's only an optimistic check: the
- * (app) layout verifies active membership, and RLS enforces it on every query.
+ * It also sends visitors without a session to /welcome, where the device becomes an anonymous
+ * member (spec v2 §4.1). That's only an optimistic check: pages verify the session and role, and
+ * RLS enforces them on every query.
  */
 
-// Reachable without a session. Everything else requires one.
-const PUBLIC_PREFIXES = ["/sign-in", "/reset-password", "/auth/"];
+// Reachable without a session. Everything else needs one (anonymous or administrator).
+const PUBLIC_PREFIXES = ["/welcome", "/sign-in", "/reset-password", "/auth/", "/offline", "/robots.txt"];
 
 function isPublic(pathname: string) {
   return PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix));
@@ -47,12 +48,12 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
 
   if (!data?.claims && !isPublic(request.nextUrl.pathname)) {
-    const signIn = request.nextUrl.clone();
-    signIn.pathname = "/sign-in";
-    signIn.search = "";
+    const welcome = request.nextUrl.clone();
+    welcome.pathname = "/welcome";
+    welcome.search = "";
     const next = `${request.nextUrl.pathname}${request.nextUrl.search}`;
-    if (next !== "/" && next !== "/dashboard") signIn.searchParams.set("next", next);
-    const redirect = NextResponse.redirect(signIn);
+    if (next !== "/" && next !== "/dashboard") welcome.searchParams.set("next", next);
+    const redirect = NextResponse.redirect(welcome);
     // Keep any cookie changes (e.g. a cleared expired session) on the redirect.
     response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
     return redirect;

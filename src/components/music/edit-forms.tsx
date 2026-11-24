@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { initialFormState } from "@/features/auth/form-state";
+import { requestSync } from "@/features/sync/engine";
 import {
   finalizeReplacement,
   prepareReplacement,
@@ -176,6 +177,7 @@ export function ArchiveToggle({
     <form
       action={async (formData) => {
         await action(formData);
+        await requestSync();
         toast.success(archived ? `${name} restored.` : `${name} archived.`);
       }}
     >

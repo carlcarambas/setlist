@@ -69,6 +69,66 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"deleted_rows": {
+                  Row: {
+                    "deleted_at": string,"id": number,"row_id": string,"table_name": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "deleted_at"?: string,"id"?: never,"row_id": string,"table_name": string
+                  }
+                  Update: {
+                    "deleted_at"?: string,"id"?: never,"row_id"?: string,"table_name"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"event_plans": {
+                  Row: {
+                    "created_at": string,"event_id": string,"id": string,"plan_id": string,"position": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"event_id": string,"id"?: string,"plan_id": string,"position"?: number
+                  }
+                  Update: {
+                    "created_at"?: string,"event_id"?: string,"id"?: string,"plan_id"?: string,"position"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "event_plans_event_id_fkey"
+      columns: ["event_id"]
+isOneToOne: false
+      referencedRelation: "events"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "event_plans_plan_id_fkey"
+      columns: ["plan_id"]
+isOneToOne: false
+      referencedRelation: "plans"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"events": {
+                  Row: {
+                    "created_at": string,"created_by": string,"description": string | null,"event_date": string,"id": string,"start_time": string | null,"title": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"created_by"?: string,"description"?: string | null,"event_date": string,"id"?: string,"start_time"?: string | null,"title": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"created_by"?: string,"description"?: string | null,"event_date"?: string,"id"?: string,"start_time"?: string | null,"title"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "events_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"music_pieces": {
                   Row: {
                     "category": string | null,"composer": string | null,"created_at": string,"created_by": string,"description": string | null,"id": string,"status": Database["public"]['Enums']["content_status"],"tags": (string)[],"title": string,"updated_at": string,"updated_by": string
@@ -95,16 +155,100 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"profiles": {
+                },"plan_activities": {
                   Row: {
-                    "created_at": string,"display_name": string,"email": string,"id": string,"role": Database["public"]['Enums']["member_role"],"status": Database["public"]['Enums']["member_status"],"updated_at": string
+                    "action": string,"created_at": string,"id": string,"metadata": Json | null,"plan_id": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"display_name": string,"email": string,"id": string,"role"?: Database["public"]['Enums']["member_role"],"status"?: Database["public"]['Enums']["member_status"],"updated_at"?: string
+                    "action": string,"created_at"?: string,"id"?: string,"metadata"?: Json | null,"plan_id": string,"user_id"?: string
                   }
                   Update: {
-                    "created_at"?: string,"display_name"?: string,"email"?: string,"id"?: string,"role"?: Database["public"]['Enums']["member_role"],"status"?: Database["public"]['Enums']["member_status"],"updated_at"?: string
+                    "action"?: string,"created_at"?: string,"id"?: string,"metadata"?: Json | null,"plan_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "plan_activities_plan_id_fkey"
+      columns: ["plan_id"]
+isOneToOne: false
+      referencedRelation: "plans"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "plan_activities_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"plan_items": {
+                  Row: {
+                    "added_by": string,"arrangement_id": string,"created_at": string,"id": string,"notes": string | null,"plan_id": string,"position": number,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "added_by"?: string,"arrangement_id": string,"created_at"?: string,"id"?: string,"notes"?: string | null,"plan_id": string,"position": number,"updated_at"?: string
+                  }
+                  Update: {
+                    "added_by"?: string,"arrangement_id"?: string,"created_at"?: string,"id"?: string,"notes"?: string | null,"plan_id"?: string,"position"?: number,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "plan_items_added_by_fkey"
+      columns: ["added_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "plan_items_arrangement_id_fkey"
+      columns: ["arrangement_id"]
+isOneToOne: false
+      referencedRelation: "arrangements"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "plan_items_plan_id_fkey"
+      columns: ["plan_id"]
+isOneToOne: false
+      referencedRelation: "plans"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"plans": {
+                  Row: {
+                    "created_at": string,"description": string | null,"id": string,"owner_id": string,"status": Database["public"]['Enums']["plan_status"],"title": string,"updated_at": string,"updated_by": string,"version": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"description"?: string | null,"id"?: string,"owner_id"?: string,"status"?: Database["public"]['Enums']["plan_status"],"title": string,"updated_at"?: string,"updated_by"?: string,"version"?: number
+                  }
+                  Update: {
+                    "created_at"?: string,"description"?: string | null,"id"?: string,"owner_id"?: string,"status"?: Database["public"]['Enums']["plan_status"],"title"?: string,"updated_at"?: string,"updated_by"?: string,"version"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "plans_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "plans_updated_by_fkey"
+      columns: ["updated_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"profiles": {
+                  Row: {
+                    "created_at": string,"display_name": string | null,"email": string,"id": string,"is_anonymous": boolean,"role": Database["public"]['Enums']["member_role"],"status": Database["public"]['Enums']["member_status"],"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"display_name"?: string | null,"email": string,"id": string,"is_anonymous"?: boolean,"role"?: Database["public"]['Enums']["member_role"],"status"?: Database["public"]['Enums']["member_status"],"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"display_name"?: string | null,"email"?: string,"id"?: string,"is_anonymous"?: boolean,"role"?: Database["public"]['Enums']["member_role"],"status"?: Database["public"]['Enums']["member_status"],"updated_at"?: string
                   }
                   Relationships: [
                     
@@ -115,11 +259,32 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "can_upload_sheet":
+            "add_plan_item":
+{ Args: { "p_arrangement_id": string,"p_plan_id": string }; Returns: Json
+                           },
+"bump_plan_version":
+{ Args: { "p_expected_version": number,"p_plan_id": string }; Returns: number
+                           },
+"can_edit_plan":
+{ Args: { "p_plan_id": string }; Returns: boolean
+                           },
+"can_upload_sheet":
 { Args: { "p_name": string }; Returns: boolean
+                           },
+"can_view_plan":
+{ Args: { "p_plan_id": string }; Returns: boolean
                            },
 "complete_invitation":
 { Args: { "p_display_name": string }; Returns: undefined
+                           },
+"create_plan":
+{ Args: { "p_description"?: string,"p_title": string }; Returns: string
+                           },
+"delete_plan":
+{ Args: { "p_plan_id": string }; Returns: undefined
+                           },
+"duplicate_plan":
+{ Args: { "p_plan_id": string }; Returns: string
                            },
 "find_possible_duplicates":
 { Args: { "p_sha256": string,"p_title": string }; Returns: {
@@ -132,15 +297,46 @@ isOneToOne: false
 "is_admin":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
+"is_plan_owner":
+{ Args: { "p_plan_id": string }; Returns: boolean
+                           },
+"list_administrators":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "created_at": string,"display_name": string,"email": string,"id": string,"status": Database["public"]['Enums']["member_status"]
+            }[]
+                           },
+"list_member_devices":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "change_count": number,"created_at": string,"display_name": string,"id": string,"last_change_at": string,"status": Database["public"]['Enums']["member_status"]
+            }[]
+                           },
 "music_categories":
 { Args: Record<PropertyKey, never>; Returns: string[]
                            },
+"pull_changes":
+{ Args: { "p_since"?: string }; Returns: Json
+                           },
+"remove_plan_item":
+{ Args: { "p_item_id": string }; Returns: number
+                           },
+"reorder_plan_items":
+{ Args: { "p_expected_version": number,"p_item_ids": (string)[],"p_plan_id": string }; Returns: number
+                           },
 "set_member_status":
 { Args: { "p_status": Database["public"]['Enums']["member_status"],"p_user_id": string }; Returns: undefined
+                           },
+"set_plan_status":
+{ Args: { "p_plan_id": string,"p_status": Database["public"]['Enums']["plan_status"] }; Returns: number
+                           },
+"update_plan_details":
+{ Args: { "p_description": string,"p_expected_version": number,"p_plan_id": string,"p_title": string }; Returns: number
+                           },
+"update_plan_item_notes":
+{ Args: { "p_expected_version": number,"p_item_id": string,"p_notes": string }; Returns: number
                            }
           }
           Enums: {
-            "arrangement_status": "pending"|"active"|"archived","content_status": "active"|"archived","member_role": "member"|"admin","member_status": "invited"|"active"|"inactive"
+            "arrangement_status": "pending"|"active"|"archived","content_status": "active"|"archived","member_role": "member"|"admin","member_status": "invited"|"active"|"inactive","plan_status": "draft"|"published"|"archived"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -260,7 +456,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "arrangement_status": ["pending", "active", "archived"],"content_status": ["active", "archived"],"member_role": ["member", "admin"],"member_status": ["invited", "active", "inactive"]
+            "arrangement_status": ["pending", "active", "archived"],"content_status": ["active", "archived"],"member_role": ["member", "admin"],"member_status": ["invited", "active", "inactive"],"plan_status": ["draft", "published", "archived"]
           }
         }
 } as const

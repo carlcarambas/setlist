@@ -7,19 +7,24 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { initialFormState } from "@/features/auth/form-state";
 import { inviteMember, setMemberStatus, updateOwnProfile } from "@/features/members/actions";
+import { requestSync } from "@/features/sync/engine";
 import { updateAppSettings } from "@/features/settings/actions";
 
-export function ProfileForm({ displayName }: { displayName: string }) {
+export function ProfileForm({ displayName, optional = false }: { displayName: string; optional?: boolean }) {
   const [state, action] = useActionState(updateOwnProfile, initialFormState);
+  useEffect(() => {
+    if (state.status === "success") void requestSync();
+  }, [state]);
   return (
     <form action={action} className="grid max-w-md gap-4" noValidate>
       <FormMessage state={state} />
       <Field
         name="displayName"
-        label="Your name"
-        autoComplete="name"
+        label={optional ? "Device name (optional)" : "Your name"}
+        autoComplete={optional ? "off" : "name"}
+        maxLength={100}
         defaultValue={state.values?.displayName ?? displayName}
-        required
+        required={!optional}
         errors={state.fieldErrors?.displayName}
       />
       <div className="sm:w-40">
@@ -78,17 +83,29 @@ export function MemberStatusForm({
   userId,
   name,
   nextStatus,
+  device = false,
 }: {
   userId: string;
   name: string;
   nextStatus: "active" | "inactive";
+  /** A member device: "Block"/"Unblock" instead of "Deactivate"/"Reactivate". */
+  device?: boolean;
 }) {
-  const label = nextStatus === "inactive" ? "Deactivate" : "Reactivate";
+  const label = device
+    ? nextStatus === "inactive"
+      ? "Block"
+      : "Unblock"
+    : nextStatus === "inactive"
+      ? "Deactivate"
+      : "Reactivate";
+  const confirmText = device
+    ? `Block ${name}? It can no longer view or change anything. (Someone determined can come back by clearing their browser; archived plans can be restored.)`
+    : `Deactivate ${name}? They will lose access immediately.`;
   return (
     <form
       action={setMemberStatus}
       onSubmit={(event) => {
-        if (nextStatus === "inactive" && !window.confirm(`Deactivate ${name}? They will lose access immediately.`)) {
+        if (nextStatus === "inactive" && !window.confirm(confirmText)) {
           event.preventDefault();
         }
       }}

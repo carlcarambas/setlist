@@ -96,7 +96,8 @@ export const librarySearchSchema = z.object({
 
 export type LibrarySearch = z.infer<typeof librarySearchSchema>;
 
-/** Escapes LIKE wildcards so a search for "50%" means the text "50%". */
-export function escapeLike(value: string) {
-  return value.replace(/[\\%_]/g, (c) => `\\${c}`);
+
+export function formatFileSize(bytes: number) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }

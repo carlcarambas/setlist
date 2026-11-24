@@ -20,9 +20,13 @@ export async function signIn(_prev: FormState, formData: FormData): Promise<Form
   const { data, error } = await supabase.auth.signInWithPassword({
     email: parsed.data.email,
     password: parsed.data.password,
+    options: { captchaToken: captchaToken(formData) },
   });
 
   if (error) {
+    if (error.code === "captcha_failed") {
+      return formError("The bot check didn't complete. Wait a moment and try again.", keptValues(formData));
+    }
     if (error.code === "user_banned") {
       return formError("This account has been deactivated. Contact a ministry administrator.", keptValues(formData));
     }
@@ -32,23 +36,34 @@ export async function signIn(_prev: FormState, formData: FormData): Promise<Form
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("status")
+    .select("status, role")
     .eq("id", data.user.id)
     .maybeSingle();
 
-  if (profile?.status === "invited") redirect("/accept-invitation");
-  if (profile?.status !== "active") {
+  if (profile?.status === "invited" && profile.role === "admin") redirect("/accept-invitation");
+  if (profile?.status !== "active" || profile.role !== "admin") {
+    // Only administrators have accounts (spec v2 §3.1); anything else is refused.
     await supabase.auth.signOut();
-    return formError("This account has been deactivated. Contact a ministry administrator.", keptValues(formData));
+    const message =
+      profile?.role === "admin"
+        ? "This account has been deactivated. Contact a ministry administrator."
+        : "This account isn't an administrator. Members don't need to sign in.";
+    return formError(message, keptValues(formData));
   }
 
   redirect(safeNextPath(parsed.data.next));
 }
 
+/** Ends the administrator session; the device continues as an anonymous member (spec v2 §4.1). */
 export async function signOut(): Promise<void> {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  redirect("/sign-in");
+  redirect("/welcome");
+}
+
+function captchaToken(formData: FormData) {
+  const token = formData.get("captchaToken");
+  return typeof token === "string" && token ? token : undefined;
 }
 
 export async function requestPasswordReset(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -58,13 +73,17 @@ export async function requestPasswordReset(_prev: FormState, formData: FormData)
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
     redirectTo: `${publicEnv().NEXT_PUBLIC_SITE_URL}/update-password`,
+    captchaToken: captchaToken(formData),
   });
+  if (error?.code === "captcha_failed") {
+    return formError("The bot check didn't complete. Wait a moment and try again.", keptValues(formData));
+  }
   if (error && error.status === 429) {
     return formError("Too many requests. Please wait a few minutes and try again.", keptValues(formData));
   }
 
   // Same answer whether or not the address has an account (no account enumeration).
-  return formSuccess("If that address belongs to a member, a reset link is on its way. Check your inbox.");
+  return formSuccess("If that address belongs to an administrator, a reset link is on its way. Check your inbox.");
 }
 
 export async function updatePassword(_prev: FormState, formData: FormData): Promise<FormState> {
