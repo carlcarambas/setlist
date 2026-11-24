@@ -69,6 +69,52 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"event_plans": {
+                  Row: {
+                    "created_at": string,"event_id": string,"id": string,"plan_id": string,"position": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"event_id": string,"id"?: string,"plan_id": string,"position"?: number
+                  }
+                  Update: {
+                    "created_at"?: string,"event_id"?: string,"id"?: string,"plan_id"?: string,"position"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "event_plans_event_id_fkey"
+      columns: ["event_id"]
+isOneToOne: false
+      referencedRelation: "events"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "event_plans_plan_id_fkey"
+      columns: ["plan_id"]
+isOneToOne: false
+      referencedRelation: "plans"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"events": {
+                  Row: {
+                    "created_at": string,"created_by": string,"description": string | null,"event_date": string,"id": string,"start_time": string | null,"title": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"created_by"?: string,"description"?: string | null,"event_date": string,"id"?: string,"start_time"?: string | null,"title": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"created_by"?: string,"description"?: string | null,"event_date"?: string,"id"?: string,"start_time"?: string | null,"title"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "events_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"music_pieces": {
                   Row: {
                     "category": string | null,"composer": string | null,"created_at": string,"created_by": string,"description": string | null,"id": string,"status": Database["public"]['Enums']["content_status"],"tags": (string)[],"title": string,"updated_at": string,"updated_by": string

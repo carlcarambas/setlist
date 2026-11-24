@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { z } from "zod";
+import { PlanEvents } from "@/components/events/plan-events";
 import { SectionSkeleton } from "@/components/layout/section-skeleton";
 import { PlanEditor } from "@/components/plans/plan-editor";
 import { ShareButton } from "@/components/plans/share-dialog";
@@ -43,6 +44,7 @@ async function Editor({ params }: Pick<PageProps<"/plans/[id]/edit">, "params">)
         {sharing ? <ShareButton planId={plan.id} planTitle={plan.title} sharing={sharing} /> : null}
       </div>
       <h1 className="sr-only">Edit plan: {plan.title}</h1>
+      <PlanEvents planId={plan.id} editable />
       <PlanEditor
         key={plan.version}
         plan={{ id: plan.id, title: plan.title, description: plan.description, version: plan.version, status: plan.status }}

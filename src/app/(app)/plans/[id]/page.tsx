@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { z } from "zod";
+import { PlanEvents } from "@/components/events/plan-events";
 import { SectionSkeleton } from "@/components/layout/section-skeleton";
 import { ArchivePlanButton, DuplicatePlanButton } from "@/components/plans/plan-actions";
 import { PlanSongs } from "@/components/plans/plan-songs";
@@ -91,6 +92,8 @@ async function Plan({ params }: Pick<PageProps<"/plans/[id]">, "params">) {
           {isOwner ? <ArchivePlanButton planId={plan.id} archived={archived} /> : null}
         </div>
       </div>
+
+      <PlanEvents planId={plan.id} editable={false} />
 
       {archived ? (
         <p role="status" className="mb-4 rounded-md border p-3 text-sm">

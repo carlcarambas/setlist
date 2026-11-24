@@ -110,3 +110,16 @@ export async function countStaleUploads() {
     .lt("created_at", cutoff);
   return count ?? 0;
 }
+
+/** Most recently added songs that have an active sheet, for the dashboard. */
+export async function listRecentMusic(limit = 5) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("music_pieces")
+    .select("id, title, composer, created_at")
+    .eq("status", "active")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error("Could not load recent music.");
+  return data;
+}

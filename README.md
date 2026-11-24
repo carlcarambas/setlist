@@ -19,8 +19,8 @@ Storage) · Netlify.
 | 2 | Music library: PDF upload with server-side checks, search, arrangements, viewer | Done |
 | 3 | Plans: editor with drag and drop, autosave, conflict protection; offline viewing | Done (not deployed) |
 | 4 | Sharing: members as viewer/editor, Shared with Me, view-only links with expiry | Done (not deployed) |
-| 5 | Events and dashboard | Next |
-| 6 | Hardening | Planned |
+| 5 | Events (upcoming/past in the church timezone, attach plans) and the dashboard | Done (not deployed) |
+| 6 | Hardening | Next |
 
 ## Local setup
 

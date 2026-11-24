@@ -539,6 +539,16 @@ running local app.
 - Known limit: a member whose access is removed keeps any offline copy already on their device until
   they sign out (the server stops serving the plan immediately).
 
+**Milestone 5 notes (as built):**
+- Events and associations use plain RLS-protected writes (no database functions). `created_by` is not
+  in the insert grant, so it always defaults to the session user.
+- Attaching requires `can_edit_plan()`, an existing event and a non-archived plan; detaching requires
+  `can_edit_plan()`. Event creators can't detach other members' plans from their event.
+- "Today" is computed on the server with `Intl` in `app_settings.timezone`; an event moves to Past
+  the day after its date. Dates are plain calendar dates and are formatted in UTC so they never shift.
+- Deleting an event asks for confirmation; associations cascade and plans are untouched.
+- Not built: EVT-09 (duplicate an event, a "Could"). No activity entries for attach/detach.
+
 ### Milestone 4 — Sharing
 - Migration: `plan_shares`, `plan_links`, plus pgTAP tests (including the anonymous role having zero access).
 - Share dialog:
