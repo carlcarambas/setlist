@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { SectionSkeleton } from "@/components/layout/section-skeleton";
 import { PieceForm } from "@/components/music/edit-forms";
 import { getPiece, listCategories } from "@/features/library/queries";
-import { requireActiveMember } from "@/lib/auth/member";
+import { requireAdmin } from "@/lib/auth/member";
 
 export const metadata: Metadata = { title: "Edit music" };
 
@@ -22,7 +22,7 @@ export default function EditPiecePage({ params }: PageProps<"/library/[id]/edit"
 }
 
 async function EditPiece({ params }: Pick<PageProps<"/library/[id]/edit">, "params">) {
-  await requireActiveMember();
+  await requireAdmin();
   const id = z.uuid().safeParse((await params).id);
   if (!id.success) notFound();
   const [piece, categories] = await Promise.all([getPiece(id.data), listCategories()]);

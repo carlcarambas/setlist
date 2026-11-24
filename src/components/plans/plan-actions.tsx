@@ -1,9 +1,9 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-import { Archive, ArchiveRestore, Copy } from "lucide-react";
+import { Archive, ArchiveRestore, Copy, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { duplicatePlan, setPlanStatus } from "@/features/plans/actions";
+import { deletePlan, duplicatePlan, setPlanStatus } from "@/features/plans/actions";
 
 function Submit({ children, label }: { children: React.ReactNode; label: string }) {
   const { pending } = useFormStatus();
@@ -33,6 +33,25 @@ export function ArchivePlanButton({ planId, archived }: { planId: string; archiv
       <input type="hidden" name="status" value={archived ? "draft" : "archived"} />
       <Submit label={archived ? "Restore" : "Archive"}>
         {archived ? <ArchiveRestore className="size-4" aria-hidden /> : <Archive className="size-4" aria-hidden />}
+      </Submit>
+    </form>
+  );
+}
+
+/** Administrators only. Asks first: the plan, its songs and its event links are removed for good. */
+export function DeletePlanButton({ planId, title }: { planId: string; title: string }) {
+  return (
+    <form
+      action={deletePlan}
+      onSubmit={(e) => {
+        if (!window.confirm(`Permanently delete "${title}"? This can't be undone. Archive it instead to keep it.`)) {
+          e.preventDefault();
+        }
+      }}
+    >
+      <input type="hidden" name="planId" value={planId} />
+      <Submit label="Delete">
+        <Trash2 className="size-4" aria-hidden />
       </Submit>
     </form>
   );

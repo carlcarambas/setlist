@@ -21,6 +21,8 @@ export const metadata: Metadata = {
   },
   description: "Plan the music. Share the setlist. Serve together.",
   applicationName: "Setlist",
+  // Reachable by anyone with the address, but not meant to be found (spec v2 §10).
+  robots: { index: false, follow: false },
   appleWebApp: {
     capable: true,
     title: "Setlist",

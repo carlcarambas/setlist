@@ -5,7 +5,7 @@
  * - Plan pages (/plans/<id>): network first; the last good copy is kept for offline use.
  * - Any other page while offline: the /offline page.
  * - PDF sheets are cached by the page itself (src/features/offline/sheets.ts).
- * Every cache name starts with "setlist-" so sign-out can remove them all.
+ * Every cache name starts with "setlist-".
  */
 const ASSETS = "setlist-assets-v1";
 const PAGES = "setlist-pages-v1";

@@ -199,64 +199,6 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"plan_links": {
-                  Row: {
-                    "created_at": string,"created_by": string,"expires_at": string | null,"id": string,"permission": Database["public"]['Enums']["share_permission"],"plan_id": string,"revoked_at": string | null,"token_hash": string
-                  }
-                  ComputedFields: never
-                  Insert: {
-                    "created_at"?: string,"created_by"?: string,"expires_at"?: string | null,"id"?: string,"permission"?: Database["public"]['Enums']["share_permission"],"plan_id": string,"revoked_at"?: string | null,"token_hash": string
-                  }
-                  Update: {
-                    "created_at"?: string,"created_by"?: string,"expires_at"?: string | null,"id"?: string,"permission"?: Database["public"]['Enums']["share_permission"],"plan_id"?: string,"revoked_at"?: string | null,"token_hash"?: string
-                  }
-                  Relationships: [
-                    {
-      foreignKeyName: "plan_links_created_by_fkey"
-      columns: ["created_by"]
-isOneToOne: false
-      referencedRelation: "profiles"
-      referencedColumns: ["id"]
-    },{
-      foreignKeyName: "plan_links_plan_id_fkey"
-      columns: ["plan_id"]
-isOneToOne: false
-      referencedRelation: "plans"
-      referencedColumns: ["id"]
-    }
-                  ]
-                },"plan_shares": {
-                  Row: {
-                    "created_at": string,"created_by": string,"id": string,"permission": Database["public"]['Enums']["share_permission"],"plan_id": string,"updated_at": string,"user_id": string
-                  }
-                  ComputedFields: never
-                  Insert: {
-                    "created_at"?: string,"created_by"?: string,"id"?: string,"permission": Database["public"]['Enums']["share_permission"],"plan_id": string,"updated_at"?: string,"user_id": string
-                  }
-                  Update: {
-                    "created_at"?: string,"created_by"?: string,"id"?: string,"permission"?: Database["public"]['Enums']["share_permission"],"plan_id"?: string,"updated_at"?: string,"user_id"?: string
-                  }
-                  Relationships: [
-                    {
-      foreignKeyName: "plan_shares_created_by_fkey"
-      columns: ["created_by"]
-isOneToOne: false
-      referencedRelation: "profiles"
-      referencedColumns: ["id"]
-    },{
-      foreignKeyName: "plan_shares_plan_id_fkey"
-      columns: ["plan_id"]
-isOneToOne: false
-      referencedRelation: "plans"
-      referencedColumns: ["id"]
-    },{
-      foreignKeyName: "plan_shares_user_id_fkey"
-      columns: ["user_id"]
-isOneToOne: false
-      referencedRelation: "profiles"
-      referencedColumns: ["id"]
-    }
-                  ]
                 },"plans": {
                   Row: {
                     "created_at": string,"description": string | null,"id": string,"owner_id": string,"status": Database["public"]['Enums']["plan_status"],"title": string,"updated_at": string,"updated_by": string,"version": number
@@ -285,14 +227,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "created_at": string,"display_name": string,"email": string,"id": string,"role": Database["public"]['Enums']["member_role"],"status": Database["public"]['Enums']["member_status"],"updated_at": string
+                    "created_at": string,"display_name": string | null,"email": string,"id": string,"is_anonymous": boolean,"role": Database["public"]['Enums']["member_role"],"status": Database["public"]['Enums']["member_status"],"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"display_name": string,"email": string,"id": string,"role"?: Database["public"]['Enums']["member_role"],"status"?: Database["public"]['Enums']["member_status"],"updated_at"?: string
+                    "created_at"?: string,"display_name"?: string | null,"email": string,"id": string,"is_anonymous"?: boolean,"role"?: Database["public"]['Enums']["member_role"],"status"?: Database["public"]['Enums']["member_status"],"updated_at"?: string
                   }
                   Update: {
-                    "created_at"?: string,"display_name"?: string,"email"?: string,"id"?: string,"role"?: Database["public"]['Enums']["member_role"],"status"?: Database["public"]['Enums']["member_status"],"updated_at"?: string
+                    "created_at"?: string,"display_name"?: string | null,"email"?: string,"id"?: string,"is_anonymous"?: boolean,"role"?: Database["public"]['Enums']["member_role"],"status"?: Database["public"]['Enums']["member_status"],"updated_at"?: string
                   }
                   Relationships: [
                     
@@ -324,8 +266,8 @@ isOneToOne: false
 "create_plan":
 { Args: { "p_description"?: string,"p_title": string }; Returns: string
                            },
-"create_plan_link":
-{ Args: { "p_expires_at"?: string,"p_plan_id": string,"p_token_hash": string }; Returns: string
+"delete_plan":
+{ Args: { "p_plan_id": string }; Returns: undefined
                            },
 "duplicate_plan":
 { Args: { "p_plan_id": string }; Returns: string
@@ -334,9 +276,6 @@ isOneToOne: false
 { Args: { "p_sha256": string,"p_title": string }; Returns: {
               "music_piece_id": string,"reason": string,"title": string
             }[]
-                           },
-"get_shared_plan":
-{ Args: { "p_token_hash": string }; Returns: Json
                            },
 "is_active_member":
 { Args: Record<PropertyKey, never>; Returns: boolean
@@ -347,6 +286,11 @@ isOneToOne: false
 "is_plan_owner":
 { Args: { "p_plan_id": string }; Returns: boolean
                            },
+"list_administrators":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "created_at": string,"display_name": string,"email": string,"id": string,"status": Database["public"]['Enums']["member_status"]
+            }[]
+                           },
 "music_categories":
 { Args: Record<PropertyKey, never>; Returns: string[]
                            },
@@ -356,38 +300,21 @@ isOneToOne: false
 "reorder_plan_items":
 { Args: { "p_expected_version": number,"p_item_ids": (string)[],"p_plan_id": string }; Returns: number
                            },
-"revoke_plan_link":
-{ Args: { "p_link_id": string }; Returns: undefined
-                           },
-"revoke_plan_share":
-{ Args: { "p_share_id": string }; Returns: undefined
-                           },
 "set_member_status":
 { Args: { "p_status": Database["public"]['Enums']["member_status"],"p_user_id": string }; Returns: undefined
                            },
 "set_plan_status":
 { Args: { "p_plan_id": string,"p_status": Database["public"]['Enums']["plan_status"] }; Returns: number
                            },
-"share_plan":
-{ Args: { "p_permission": Database["public"]['Enums']["share_permission"],"p_plan_id": string,"p_user_id": string }; Returns: string
-                           },
-"shared_plan_sheet":
-{ Args: { "p_arrangement_id": string,"p_token_hash": string }; Returns: {
-              "original_filename": string,"storage_path": string
-            }[]
-                           },
 "update_plan_details":
 { Args: { "p_description": string,"p_expected_version": number,"p_plan_id": string,"p_title": string }; Returns: number
                            },
 "update_plan_item_notes":
 { Args: { "p_expected_version": number,"p_item_id": string,"p_notes": string }; Returns: number
-                           },
-"valid_link_plan":
-{ Args: { "p_token_hash": string }; Returns: string
                            }
           }
           Enums: {
-            "arrangement_status": "pending"|"active"|"archived","content_status": "active"|"archived","member_role": "member"|"admin","member_status": "invited"|"active"|"inactive","plan_status": "draft"|"published"|"archived","share_permission": "viewer"|"editor"
+            "arrangement_status": "pending"|"active"|"archived","content_status": "active"|"archived","member_role": "member"|"admin","member_status": "invited"|"active"|"inactive","plan_status": "draft"|"published"|"archived"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -507,7 +434,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "arrangement_status": ["pending", "active", "archived"],"content_status": ["active", "archived"],"member_role": ["member", "admin"],"member_status": ["invited", "active", "inactive"],"plan_status": ["draft", "published", "archived"],"share_permission": ["viewer", "editor"]
+            "arrangement_status": ["pending", "active", "archived"],"content_status": ["active", "archived"],"member_role": ["member", "admin"],"member_status": ["invited", "active", "inactive"],"plan_status": ["draft", "published", "archived"]
           }
         }
 } as const

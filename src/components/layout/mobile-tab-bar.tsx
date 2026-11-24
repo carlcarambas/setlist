@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { isActive, mobileLabels, primaryNav } from "./nav-items";
+import { isActive, mobileLabels, primaryNav, settingsNav } from "./nav-items";
 
 /** Tab bar with the current page highlighted. Render inside <Suspense> with `MobileTabBarLinks` as fallback. */
 export function MobileTabBar() {
@@ -18,7 +18,7 @@ export function MobileTabBarLinks({ pathname = null }: { pathname?: string | nul
       className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
     >
       <ul className="grid grid-cols-5">
-        {primaryNav.map(({ href, label, icon: Icon }) => {
+        {[...primaryNav, settingsNav].map(({ href, label, icon: Icon }) => {
           const active = pathname !== null && isActive(pathname, href);
           return (
             <li key={href}>

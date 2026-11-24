@@ -8,15 +8,15 @@ import { SectionSkeleton } from "@/components/layout/section-skeleton";
 import { NewPlanForm } from "@/components/plans/new-plan-form";
 import { PlanStatusBadge, relativeTime } from "@/components/plans/plan-status";
 import { Card, CardContent } from "@/components/ui/card";
-import { listMyPlans } from "@/features/plans/queries";
+import { listPlans } from "@/features/plans/queries";
 import { requireActiveMember } from "@/lib/auth/member";
 
-export const metadata: Metadata = { title: "My Plans" };
+export const metadata: Metadata = { title: "Plans" };
 
 export default function PlansPage({ searchParams }: PageProps<"/plans">) {
   return (
     <>
-      <PageHeader title="My Plans" description="Setlists you own." />
+      <PageHeader title="Plans" description="Every setlist in the ministry. Anyone can edit them." />
       <Card className="mb-6">
         <CardContent>
           <NewPlanForm />
@@ -30,9 +30,9 @@ export default function PlansPage({ searchParams }: PageProps<"/plans">) {
 }
 
 async function PlanList({ searchParams }: Pick<PageProps<"/plans">, "searchParams">) {
-  const member = await requireActiveMember();
+  await requireActiveMember();
   const includeArchived = (await searchParams).archived === "1";
-  const plans = await listMyPlans(member.id, includeArchived);
+  const plans = await listPlans(includeArchived);
 
   return (
     <section aria-labelledby="plans-heading">
@@ -61,6 +61,7 @@ async function PlanList({ searchParams }: Pick<PageProps<"/plans">, "searchParam
                 </Link>
                 <p className="text-sm text-muted-foreground">
                   {p.songCount} {p.songCount === 1 ? "song" : "songs"} · updated {relativeTime(p.updated_at)}
+                  {p.editor?.display_name ? ` by ${p.editor.display_name}` : null}
                 </p>
               </div>
               <PlanStatusBadge status={p.status} />

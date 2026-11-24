@@ -1,6 +1,7 @@
 # Setlist
 
-Music ministry planning: a shared PDF music library, setlists (plans), events and sharing.
+Music ministry planning: a shared PDF music library, setlists (plans) and events. Members use it
+without an account; administrators sign in to manage the library.
 One responsive web app for desktop and mobile, installable from the browser.
 
 - **Requirements:** [`spec.md`](spec.md) v2.0 (offline-first, no member login) is the source of truth.
@@ -22,8 +23,8 @@ Storage) · Netlify.
 | 3 | Plans: editor with drag and drop, autosave, conflict protection; offline viewing | Done (not deployed) |
 | 4 | Sharing: members as viewer/editor, Shared with Me, view-only links with expiry | Done (not deployed; removed by spec v2) |
 | 5 | Events (upcoming/past in the church timezone, attach plans) and the dashboard | Done (not deployed) |
-| 6 | Access model: no member login, admin-only library, anonymous devices (spec v2) | Next |
-| 7 | Local data and offline app shell | Planned |
+| 6 | Access model: no member login (anonymous devices + bot check), admin-only library, sharing removed | Done (not deployed) |
+| 7 | Local data and offline app shell | Next |
 | 8 | Offline sheets | Planned |
 | 9 | Offline editing and sync | Planned |
 | 10 | Hardening and launch | Planned |
@@ -59,13 +60,17 @@ running (for the local Supabase stack).
    npm run dev
    ```
 
-**Local test accounts** (created by `supabase/seed.sql`; the password is in that file):
+**Members** don't have accounts: any browser that opens the app becomes an anonymous member device after an
+invisible bot check (Cloudflare Turnstile). Locally the check uses Cloudflare's published test keys, which
+always pass: `NEXT_PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA` in `.env.local`, and the matching test
+secret in `supabase/config.toml`. The bot check needs internet access, even locally.
+
+**Local administrator accounts** (created by `supabase/seed.sql`; the password is in that file):
 
 | Email | Role |
 |---|---|
 | `admin@setlist.test` | Active administrator |
-| `member@setlist.test` | Active member |
-| `invited@setlist.test` | Invited, hasn't joined yet |
+| `invited@setlist.test` | Invited administrator, hasn't joined yet |
 
 Local Supabase Studio runs at http://127.0.0.1:54323, and emails sent locally (invites, resets) appear in
 Mailpit at http://127.0.0.1:54324.
@@ -154,7 +159,8 @@ See [`.env.example`](.env.example).
 | `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase API URL |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Yes | Publishable key; all access is governed by RLS |
 | `SUPABASE_SECRET_KEY` | **No** | Bypasses RLS. Server only, used solely in `src/lib/supabase/admin.ts` |
-| `NEXT_PUBLIC_SITE_URL` | Yes | Base URL for auth redirects and share links. Optional on Netlify (defaults to the project's main address) |
+| `NEXT_PUBLIC_SITE_URL` | Yes | Base URL for auth email redirects. Optional on Netlify (defaults to the project's main address) |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Yes | Cloudflare Turnstile site key for the bot check (public by design). Its secret goes only in Supabase |
 | `NEXT_PUBLIC_MAX_UPLOAD_MB` | Yes | Optional. PDF size limit (default 20); keep in sync with `supabase/config.toml` |
 | `SUPABASE_PROJECT_ID` | n/a | Optional, local only. Used by `npm run db:types:remote` |
 
@@ -163,21 +169,25 @@ See [`.env.example`](.env.example).
 ### Supabase (cloud)
 
 1. Create a project (free tier) named `setlist-staging`. Production (`setlist-prod`) is created at Milestone 6.
-2. **Authentication → Sign In / Providers:** turn **off** "Allow new users to sign up" (Setlist is
-   invitation-only).
-3. **Authentication → URL Configuration:** set the Site URL to the Netlify URL, and add redirect URLs:
+2. **Authentication → Sign In / Providers:** turn **on** "Allow new users to sign up" and "Allow anonymous
+   sign-ins". Supabase refuses anonymous sign-ins (member devices) when sign-ups are off. People who
+   register by email themselves get no administrator rights and can't sign in to the app.
+3. **Authentication → Attack Protection (bot protection):** enable CAPTCHA with **Cloudflare Turnstile** and
+   paste the Turnstile **secret key**. Create the Turnstile widget (free) in the Cloudflare dashboard for the
+   site's domain; its **site key** goes into Netlify as `NEXT_PUBLIC_TURNSTILE_SITE_KEY`.
+4. **Authentication → URL Configuration:** set the Site URL to the Netlify URL, and add redirect URLs:
    - `http://localhost:3000/**`
    - `https://<site>.netlify.app/**`
    - `https://deploy-preview-*--<site>.netlify.app/**`
-4. Run `npx supabase login`, then link the project and push migrations (see [Database changes](#database-changes)).
-5. **Email templates** (Authentication → Emails): replace the **Invite user** and **Reset password**
+5. Run `npx supabase login`, then link the project and push migrations (see [Database changes](#database-changes)).
+6. **Email templates** (Authentication → Emails): replace the **Invite user** and **Reset password**
    templates with the HTML in `supabase/templates/invite.html` and `recovery.html`. Their links go to
    `/auth/confirm`, which signs the person in on the server.
-6. **Custom SMTP** (Authentication → Emails → SMTP Settings): Supabase's built-in email only delivers to
-   your Supabase team's own addresses and is heavily rate-limited, so invitations to other members need a
+7. **Custom SMTP** (Authentication → Emails → SMTP Settings): Supabase's built-in email only delivers to
+   your Supabase team's own addresses and is heavily rate-limited, so invitations to other administrators need a
    provider. Resend's free tier works: verify a sending domain, then enter its SMTP host, port, user and
    password here.
-7. **First administrator** (once): invitations need an admin, so the first one is made by hand.
+8. **First administrator** (once): invitations need an admin, so the first one is made by hand.
    1. **Authentication → Users → Add user → Create new user** with your email and a password, and tick
       "Auto Confirm User".
    2. **SQL Editor**, run (with your email):
@@ -186,14 +196,16 @@ See [`.env.example`](.env.example).
       update public.profiles set role = 'admin', status = 'active' where email = 'you@example.com';
       ```
 
-   3. Sign in to the app. Invite everyone else from **Members**.
+   3. Sign in to the app (**Settings → Administrator sign in**). Invite other administrators from
+      **Administrators**. Members need nothing: they just open the app.
 
 ### Netlify
 
 1. **Add new site → Import from Git** and pick this GitHub repository. Netlify detects Next.js; the build
    settings come from `netlify.toml`.
 2. **Project configuration → Environment variables:** add `NEXT_PUBLIC_SUPABASE_URL`,
-   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY` (mark it as containing secret values).
+   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `SUPABASE_SECRET_KEY`
+   (mark it as containing secret values).
    `NEXT_PUBLIC_SITE_URL` is optional: without it the app uses the project's main Netlify address.
 3. Deploy. Netlify's free plan counts each **production** deploy against its monthly credits. Merge to `main`
    once per milestone and use deploy previews for work in progress.
@@ -204,6 +216,8 @@ See [`.env.example`](.env.example).
 - `src/lib/supabase/admin.ts` (secret key) imports `server-only`; importing it from client code fails the
   build.
 - PDF sheets live in the private `music-sheets` bucket. Browsers upload straight to Storage with a one-time
-  signed URL; the server then checks the stored bytes before a sheet becomes visible. Members can't approve
-  their own uploads.
+  signed URL; the server then checks the stored bytes before a sheet becomes visible. Only administrators can
+  upload, and they can't approve their own uploads.
+- Members are anonymous Supabase users. Emails are never readable by members (column grants); the
+  `anon` role (no session) has no table access. Pages are `noindex` and `robots.txt` disallows crawling.
 - Never commit `.env*` files except `.env.example`, and never put real member data in `seed.sql`.

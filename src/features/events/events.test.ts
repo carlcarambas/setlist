@@ -42,6 +42,6 @@ describe("formatting", () => {
   });
   it("explains attach failures", () => {
     expect(attachErrorMessage("23505")).toMatch(/already/);
-    expect(attachErrorMessage("42501")).toMatch(/own or can edit/);
+    expect(attachErrorMessage("42501")).toMatch(/Archived/);
   });
 });

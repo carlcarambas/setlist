@@ -7,7 +7,7 @@ import { SectionSkeleton } from "@/components/layout/section-skeleton";
 import { UploadForm } from "@/components/music/upload-form";
 import { getPiece } from "@/features/library/queries";
 import { publicEnv } from "@/lib/env";
-import { requireActiveMember } from "@/lib/auth/member";
+import { requireAdmin } from "@/lib/auth/member";
 
 export const metadata: Metadata = { title: "Add arrangement" };
 
@@ -20,7 +20,7 @@ export default function NewArrangementPage({ params }: PageProps<"/library/[id]/
 }
 
 async function NewArrangement({ params }: Pick<PageProps<"/library/[id]/arrangements/new">, "params">) {
-  await requireActiveMember();
+  await requireAdmin();
   const id = z.uuid().safeParse((await params).id);
   if (!id.success) notFound();
   const piece = await getPiece(id.data);

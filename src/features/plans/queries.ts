@@ -1,17 +1,17 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 
-export async function listMyPlans(memberId: string, includeArchived: boolean) {
+/** Every plan, most recently updated first (spec v2 §4.3: all plans are visible to everyone). */
+export async function listPlans(includeArchived: boolean, limit = 100) {
   const supabase = await createClient();
   let query = supabase
     .from("plans")
-    .select("id, title, status, updated_at, plan_items(count)")
-    .eq("owner_id", memberId)
+    .select("id, title, status, updated_at, editor:profiles!plans_updated_by_fkey(display_name), plan_items(count)")
     .order("updated_at", { ascending: false })
-    .limit(100);
+    .limit(limit);
   if (!includeArchived) query = query.neq("status", "archived");
   const { data, error } = await query;
-  if (error) throw new Error("Could not load your plans.");
+  if (error) throw new Error("Could not load plans.");
   return data.map((p) => ({ ...p, songCount: p.plan_items[0]?.count ?? 0 }));
 }
 
@@ -34,7 +34,6 @@ export async function getPlan(id: string) {
     .from("plans")
     .select(
       `id, title, description, status, version, owner_id, created_at, updated_at,
-       owner:profiles!plans_owner_id_fkey(display_name),
        editor:profiles!plans_updated_by_fkey(display_name),
        plan_items(id, position, notes,
          arrangement:arrangements(id, title, musical_key, bpm, status, updated_at,

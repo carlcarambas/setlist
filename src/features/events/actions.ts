@@ -4,7 +4,7 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { formError, formSuccess, keptValues, validationError, type FormState } from "@/features/auth/form-state";
-import { getCurrentMember } from "@/lib/auth/member";
+import { getCurrentMember, isAdmin } from "@/lib/auth/member";
 import { createClient } from "@/lib/supabase/server";
 import { attachErrorMessage, eventPlanSchema, eventSchema } from "./schemas";
 
@@ -44,13 +44,13 @@ export async function updateEvent(_prev: FormState, formData: FormData): Promise
     .eq("id", eventId.data)
     .select("id");
   if (error) return formError("The event couldn't be saved. Please try again.", keptValues(formData));
-  // RLS hides the row from members who aren't the creator or an admin, so nothing is updated.
-  if (!data.length) return formError("Only the event's creator or an administrator can edit it.", keptValues(formData));
+  if (!data.length) return formError("This event no longer exists.", keptValues(formData));
   redirect(`/events/${eventId.data}`);
 }
 
+/** Administrators only (spec v2 §4.4); RLS refuses everyone else too. */
 export async function deleteEvent(formData: FormData) {
-  if (!(await activeMember())) redirect("/sign-in");
+  if (!isAdmin(await activeMember())) redirect("/sign-in");
   const eventId = z.uuid().safeParse(formData.get("eventId"));
   if (!eventId.success) redirect("/events");
   const supabase = await createClient();
@@ -78,7 +78,7 @@ export async function detachPlanFromEvent(formData: FormData) {
   const parsed = eventPlanSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return;
   const supabase = await createClient();
-  // Removes only the association; RLS limits it to the plan's owner and editors.
+  // Removes only the association; neither the event nor the plan is deleted.
   await supabase.from("event_plans").delete().eq("event_id", parsed.data.eventId).eq("plan_id", parsed.data.planId);
   refresh();
 }

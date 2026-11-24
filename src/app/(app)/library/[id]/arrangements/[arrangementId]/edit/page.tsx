@@ -10,7 +10,7 @@ import { ArchiveToggle, ArrangementForm, ReplaceFileForm } from "@/components/mu
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatFileSize, getArrangement } from "@/features/library/queries";
 import { publicEnv } from "@/lib/env";
-import { requireActiveMember } from "@/lib/auth/member";
+import { requireAdmin } from "@/lib/auth/member";
 
 export const metadata: Metadata = { title: "Edit arrangement" };
 
@@ -25,7 +25,7 @@ export default function EditArrangementPage({ params }: Props) {
 }
 
 async function EditArrangement({ params }: Pick<Props, "params">) {
-  await requireActiveMember();
+  await requireAdmin();
   const id = z.uuid().safeParse((await params).arrangementId);
   if (!id.success) notFound();
   const arrangement = await getArrangement(id.data);

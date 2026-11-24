@@ -3,8 +3,8 @@
 --
 -- Local sign-in accounts (password for all: setlist-local-dev):
 --   admin@setlist.test    active administrator
---   member@setlist.test   active member
---   invited@setlist.test  invited, hasn't finished joining
+--   invited@setlist.test  invited administrator, hasn't finished joining
+-- Members don't have accounts (spec v2): each browser becomes an anonymous member device.
 
 create or replace function pg_temp.seed_user(p_email text, p_name text)
 returns uuid
@@ -38,11 +38,10 @@ $$;
 
 do $$
 declare
-  v_admin  uuid := pg_temp.seed_user('admin@setlist.test', 'Local Admin');
-  v_member uuid := pg_temp.seed_user('member@setlist.test', 'Local Member');
+  v_admin   uuid := pg_temp.seed_user('admin@setlist.test', 'Local Admin');
+  v_invited uuid := pg_temp.seed_user('invited@setlist.test', 'Invited Person');
 begin
-  perform pg_temp.seed_user('invited@setlist.test', 'Invited Person');
   update public.profiles set role = 'admin', status = 'active' where id = v_admin;
-  update public.profiles set status = 'active' where id = v_member;
+  update public.profiles set role = 'admin' where id = v_invited;
 end;
 $$;

@@ -8,7 +8,7 @@ import { SectionSkeleton } from "@/components/layout/section-skeleton";
 import { ArchiveToggle } from "@/components/music/edit-forms";
 import { Button } from "@/components/ui/button";
 import { formatFileSize, getPiece } from "@/features/library/queries";
-import { requireActiveMember } from "@/lib/auth/member";
+import { isAdmin, requireActiveMember } from "@/lib/auth/member";
 import { z } from "zod";
 
 export const metadata: Metadata = { title: "Music details" };
@@ -28,7 +28,8 @@ export default function PiecePage({ params }: PageProps<"/library/[id]">) {
 }
 
 async function PieceDetails({ params }: Pick<PageProps<"/library/[id]">, "params">) {
-  await requireActiveMember();
+  // Everyone views and downloads; only administrators change music (spec v2 §4.2).
+  const admin = isAdmin(await requireActiveMember());
   const id = z.uuid().safeParse((await params).id);
   if (!id.success) notFound();
   const piece = await getPiece(id.data);
@@ -43,15 +44,17 @@ async function PieceDetails({ params }: Pick<PageProps<"/library/[id]">, "params
         title={piece.title}
         description={[piece.composer, piece.category].filter(Boolean).join(" · ") || undefined}
         actions={
-          <>
-            <Button asChild variant="outline" className="h-11 gap-2">
-              <Link href={`/library/${piece.id}/edit`}>
-                <Pencil className="size-4" aria-hidden />
-                Edit
-              </Link>
-            </Button>
-            <ArchiveToggle kind="piece" id={piece.id} archived={archived} name={piece.title} />
-          </>
+          admin ? (
+            <>
+              <Button asChild variant="outline" className="h-11 gap-2">
+                <Link href={`/library/${piece.id}/edit`}>
+                  <Pencil className="size-4" aria-hidden />
+                  Edit
+                </Link>
+              </Button>
+              <ArchiveToggle kind="piece" id={piece.id} archived={archived} name={piece.title} />
+            </>
+          ) : undefined
         }
       />
 
@@ -78,7 +81,7 @@ async function PieceDetails({ params }: Pick<PageProps<"/library/[id]">, "params
           <h2 id="arrangements-heading" className="text-lg font-semibold">
             Arrangements ({arrangements.length})
           </h2>
-          {!archived ? (
+          {admin && !archived ? (
             <Button asChild variant="outline" className="h-11 gap-2">
               <Link href={`/library/${piece.id}/arrangements/new`}>
                 <Plus className="size-4" aria-hidden />
@@ -90,7 +93,7 @@ async function PieceDetails({ params }: Pick<PageProps<"/library/[id]">, "params
 
         {arrangements.length === 0 ? (
           <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-            No sheets yet. Add an arrangement to upload a PDF.
+            No sheets yet.{admin ? " Add an arrangement to upload a PDF." : null}
           </p>
         ) : (
           <ul className="divide-y rounded-lg border">
@@ -105,7 +108,7 @@ async function PieceDetails({ params }: Pick<PageProps<"/library/[id]">, "params
                   {a.instrument_notes ? <p className="text-sm">{a.instrument_notes}</p> : null}
                   <p className="truncate text-xs text-muted-foreground">
                     {a.original_filename} · {formatFileSize(a.file_size_bytes)} · uploaded by{" "}
-                    {a.uploader?.display_name ?? "a member"} on{" "}
+                    {a.uploader?.display_name ?? "an administrator"} on{" "}
                     {new Date(a.created_at).toLocaleDateString("en", { dateStyle: "medium" })}
                   </p>
                   {a.status === "archived" ? (
@@ -125,12 +128,14 @@ async function PieceDetails({ params }: Pick<PageProps<"/library/[id]">, "params
                       Download
                     </a>
                   </Button>
-                  <Button asChild variant="outline" className="h-11 gap-2">
-                    <Link href={`/library/${piece.id}/arrangements/${a.id}/edit`} aria-label={`Edit ${a.title}`}>
-                      <Pencil className="size-4" aria-hidden />
-                      Edit
-                    </Link>
-                  </Button>
+                  {admin ? (
+                    <Button asChild variant="outline" className="h-11 gap-2">
+                      <Link href={`/library/${piece.id}/arrangements/${a.id}/edit`} aria-label={`Edit ${a.title}`}>
+                        <Pencil className="size-4" aria-hidden />
+                        Edit
+                      </Link>
+                    </Button>
+                  ) : null}
                 </div>
               </li>
             ))}

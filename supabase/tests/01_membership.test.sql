@@ -1,131 +1,121 @@
--- Membership: profiles, helpers, app_settings RLS. Run with `npm run test:db`.
+-- Access model (spec v2 §3, §4.1, §10): anonymous member devices, invited administrators,
+-- profiles and app_settings. Run with `npm run test:db`.
 begin;
-select plan(28);
+select plan(32);
 
 -- Test users (created as postgres; the trigger makes their profiles).
-insert into auth.users (id, email, raw_user_meta_data) values
-  ('00000000-0000-0000-0000-0000000000a1', 'admin@test.local',    '{"display_name":"Ada Admin"}'),
-  ('00000000-0000-0000-0000-0000000000b1', 'member@test.local',   '{"display_name":"Ben Member"}'),
-  ('00000000-0000-0000-0000-0000000000c1', 'invited@test.local',  '{}'),
-  ('00000000-0000-0000-0000-0000000000d1', 'inactive@test.local', '{"display_name":"Dee Inactive"}');
+--   a1 administrator, a2 second administrator, c1 invited administrator,
+--   m1 / m2 anonymous member devices, s1 self-registered by email (never invited).
+insert into auth.users (id, email, raw_user_meta_data, is_anonymous) values
+  ('00000000-0000-0000-0000-0000000000a1', 'admin@test.local',   '{"display_name":"Ada Admin"}', false),
+  ('00000000-0000-0000-0000-0000000000a2', 'admin2@test.local',  '{"display_name":"Al Admin"}',  false),
+  ('00000000-0000-0000-0000-0000000000c1', 'invited@test.local', '{}',                           false),
+  ('00000000-0000-0000-0000-0000000000e1', null,                 '{}',                           true),
+  ('00000000-0000-0000-0000-0000000000e2', null,                 '{}',                           true),
+  ('00000000-0000-0000-0000-0000000000f1', 'stranger@test.local','{}',                           false);
 
 -- ---- trigger --------------------------------------------------------------
 select results_eq(
-  $$ select display_name, status::text from public.profiles
-      where id = '00000000-0000-0000-0000-0000000000b1' $$,
-  $$ values ('Ben Member', 'invited') $$,
-  'new auth user gets an invited profile named from metadata'
-);
+  $$ select role::text, status::text, is_anonymous, display_name from public.profiles
+      where id = '00000000-0000-0000-0000-0000000000e1' $$,
+  $$ values ('member', 'active', true, null::text) $$,
+  'an anonymous device becomes an active member with no name');
+select results_eq(
+  $$ select role::text, status::text, is_anonymous from public.profiles
+      where id = '00000000-0000-0000-0000-0000000000f1' $$,
+  $$ values ('member', 'invited', false) $$,
+  'an email sign-up starts as an invited member, never an administrator');
 select is(
   (select display_name from public.profiles where id = '00000000-0000-0000-0000-0000000000c1'),
-  'invited',
-  'display name falls back to the email local part'
-);
+  'invited', 'an email user''s name falls back to the email local part');
 
-update auth.users set email = 'member2@test.local' where id = '00000000-0000-0000-0000-0000000000b1';
-select is(
-  (select email from public.profiles where id = '00000000-0000-0000-0000-0000000000b1'),
-  'member2@test.local',
-  'profile email follows auth email changes'
-);
+update auth.users set email = 'admin1@test.local' where id = '00000000-0000-0000-0000-0000000000a1';
+select is((select email from public.profiles where id = '00000000-0000-0000-0000-0000000000a1'),
+  'admin1@test.local', 'profile email follows auth email changes');
 
-update public.profiles set status = 'active', role = 'admin' where id = '00000000-0000-0000-0000-0000000000a1';
-update public.profiles set status = 'active'                 where id = '00000000-0000-0000-0000-0000000000b1';
-update public.profiles set status = 'inactive'               where id = '00000000-0000-0000-0000-0000000000d1';
+-- Invitations (server, secret key) make administrators.
+update public.profiles set status = 'active', role = 'admin'
+ where id in ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000a2');
+update public.profiles set role = 'admin' where id = '00000000-0000-0000-0000-0000000000c1';
 
-create temporary table expected (profiles int) on commit drop;
-grant select on expected to authenticated;
-insert into expected select count(*) from public.profiles;
-
--- ---- anonymous ------------------------------------------------------------
+-- ---- no session -----------------------------------------------------------
 set local role anon;
-select throws_ok($$ select * from public.profiles $$, '42501', null, 'anon cannot read profiles');
-select throws_ok($$ select * from public.app_settings $$, '42501', null, 'anon cannot read app_settings');
-select throws_ok($$ select public.is_admin() $$, '42501', null, 'anon cannot call is_admin()');
+select throws_ok($$ select * from public.profiles $$, '42501', null, 'no session: profiles unreadable');
+select throws_ok($$ select * from public.app_settings $$, '42501', null, 'no session: app_settings unreadable');
+select throws_ok($$ select public.is_admin() $$, '42501', null, 'no session: is_admin() not callable');
 reset role;
 
--- ---- invited user ---------------------------------------------------------
+-- ---- anonymous member device ----------------------------------------------
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000c1","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000e1","role":"authenticated","is_anonymous":true}', true);
 
-select is((select count(*)::int from public.profiles), 1, 'invited user sees only their own profile');
-select is((select count(*)::int from public.app_settings), 0, 'invited user cannot read app_settings');
-select ok(not public.is_active_member(), 'invited user is not an active member');
+select ok(public.is_active_member(), 'an anonymous device is an active member');
+select ok(not public.is_admin(), 'an anonymous device is not an administrator');
+select is((select count(*)::int from public.app_settings), 1, 'a member device reads app_settings');
+select ok((select count(*) from public.profiles) >= 5, 'a member device sees names and roles');
+select throws_ok($$ select email from public.profiles $$, '42501', null, 'a member device cannot read emails');
+select is((select count(*)::int from public.list_administrators()), 0, 'a member device gets no administrator list');
 
-select lives_ok($$ select public.complete_invitation('  Cara Choir  ') $$, 'invited user can complete the invitation');
-select results_eq(
-  $$ select display_name, status::text from public.profiles where id = (select auth.uid()) $$,
-  $$ values ('Cara Choir', 'active') $$,
-  'completing the invitation sets the trimmed name and activates'
-);
-select throws_ok($$ select public.complete_invitation('Again') $$, '42501', 'invitation_not_pending',
-  'an invitation cannot be completed twice');
-reset role;
-
--- ---- active member --------------------------------------------------------
-set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000b1","role":"authenticated"}', true);
-
-select is((select count(*)::int from public.profiles), (select profiles from expected), 'active member sees the whole member directory');
-select is((select count(*)::int from public.app_settings), 1, 'active member can read app_settings');
-
-update public.profiles set display_name = 'Benjamin' where id = '00000000-0000-0000-0000-0000000000b1';
-select is((select display_name from public.profiles where id = '00000000-0000-0000-0000-0000000000b1'),
-  'Benjamin', 'member can rename themselves');
-
-select throws_ok(
-  $$ update public.profiles set role = 'admin' where id = '00000000-0000-0000-0000-0000000000b1' $$,
-  '42501', null, 'member cannot change their own role');
-select throws_ok(
-  $$ update public.profiles set status = 'inactive' where id = '00000000-0000-0000-0000-0000000000b1' $$,
-  '42501', null, 'member cannot change their own status');
-
+update public.profiles set display_name = 'Choir iPad' where id = (select auth.uid());
+select is((select display_name from public.profiles where id = (select auth.uid())), 'Choir iPad',
+  'a device can set its display name');
+update public.profiles set display_name = null where id = (select auth.uid());
+select is((select display_name from public.profiles where id = (select auth.uid())), null,
+  'the display name is optional');
+select throws_ok($$ update public.profiles set role = 'admin' where id = (select auth.uid()) $$,
+  '42501', null, 'a device cannot make itself an administrator');
 update public.profiles set display_name = 'Hacked' where id = '00000000-0000-0000-0000-0000000000a1';
 select is((select display_name from public.profiles where id = '00000000-0000-0000-0000-0000000000a1'),
-  'Ada Admin', 'member cannot rename someone else');
-
+  'Ada Admin', 'a device cannot rename someone else');
 update public.app_settings set church_name = 'Hacked';
-select is((select church_name from public.app_settings), 'Music Ministry', 'member cannot change app_settings');
-
-select throws_ok(
-  $$ select public.set_member_status('00000000-0000-0000-0000-0000000000a1', 'inactive') $$,
-  '42501', 'not_authorized', 'member cannot change member status');
+select is((select church_name from public.app_settings), 'Music Ministry', 'a device cannot change app_settings');
+select throws_ok($$ select public.set_member_status('00000000-0000-0000-0000-0000000000e2', 'inactive') $$,
+  '42501', 'not_authorized', 'a device cannot block other devices');
 reset role;
 
--- ---- inactive member ------------------------------------------------------
+-- ---- invited administrator ------------------------------------------------
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000d1","role":"authenticated"}', true);
-select is((select count(*)::int from public.profiles), 1, 'inactive member sees only their own profile');
-select is((select count(*)::int from public.app_settings), 0, 'inactive member cannot read app_settings');
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000c1","role":"authenticated"}', true);
+select ok(not public.is_admin(), 'an invited administrator has no administrator rights yet');
+select lives_ok($$ select public.complete_invitation('  Cara Choir  ') $$, 'the invitation can be completed');
+select results_eq(
+  $$ select display_name, status::text from public.profiles where id = (select auth.uid()) $$,
+  $$ values ('Cara Choir', 'active') $$, 'completing sets the trimmed name and activates');
+select ok(public.is_admin(), 'the invited administrator is now an administrator');
 reset role;
 
--- ---- administrator --------------------------------------------------------
+-- ---- administrator ----------------------------------------------------------
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated"}', true);
 
-select lives_ok(
-  $$ select public.set_member_status('00000000-0000-0000-0000-0000000000b1', 'inactive') $$,
-  'admin can deactivate a member');
-select is((select status::text from public.profiles where id = '00000000-0000-0000-0000-0000000000b1'),
-  'inactive', 'deactivation is recorded');
-select throws_ok(
-  $$ select public.set_member_status('00000000-0000-0000-0000-0000000000a1', 'inactive') $$,
-  '42501', 'cannot_change_own_status', 'admin cannot deactivate themselves');
-
-select throws_ok(
-  $$ update public.app_settings set updated_by = '00000000-0000-0000-0000-0000000000b1' $$,
+select results_eq(
+  $$ select email from public.list_administrators() where email like '%@test.local' order by email $$,
+  $$ values ('admin1@test.local'), ('admin2@test.local'), ('invited@test.local') $$,
+  'administrators see administrators'' emails, and only theirs');
+select lives_ok($$ select public.set_member_status('00000000-0000-0000-0000-0000000000e2', 'inactive') $$,
+  'an administrator can block a member device');
+select lives_ok($$ select public.set_member_status('00000000-0000-0000-0000-0000000000a2', 'inactive') $$,
+  'an administrator can deactivate another administrator');
+select throws_ok($$ select public.set_member_status('00000000-0000-0000-0000-0000000000a1', 'inactive') $$,
+  '42501', 'cannot_change_own_status', 'an administrator cannot deactivate themselves');
+select throws_ok($$ update public.app_settings set updated_by = '00000000-0000-0000-0000-0000000000e1' $$,
   '42501', null, 'updated_by cannot be set by the client');
 update public.app_settings set church_name = 'Grace Chapel';
-select results_eq(
-  $$ select church_name, updated_by from public.app_settings $$,
+select results_eq($$ select church_name, updated_by from public.app_settings $$,
   $$ values ('Grace Chapel', '00000000-0000-0000-0000-0000000000a1'::uuid) $$,
-  'admin can update settings; updated_by is stamped from the session');
+  'an administrator updates settings; updated_by comes from the session');
 reset role;
 
--- The deactivated member's still-valid session reads nothing from now on.
+-- ---- blocked device and deactivated administrator ---------------------------
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000b1","role":"authenticated"}', true);
-select is((select count(*)::int from public.app_settings), 0, 'deactivated member loses access immediately');
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000e2","role":"authenticated","is_anonymous":true}', true);
+select ok(not public.is_active_member(), 'a blocked device is no longer a member');
+select is((select count(*)::int from public.app_settings), 0, 'a blocked device loses access immediately');
+reset role;
+
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000a2","role":"authenticated"}', true);
+select ok(not public.is_admin(), 'a deactivated administrator loses administrator rights immediately');
 reset role;
 
 select * from finish();

@@ -3,9 +3,9 @@
 /**
  * Offline copies of PDF sheets (spec §19 P9), kept in Cache Storage.
  * Keyed by arrangement id + file version, so a replaced PDF is fetched again.
- * Every cache Setlist creates starts with "setlist-", so sign-out can clear them all.
+ * Every cache Setlist creates starts with "setlist-".
  */
-export const CACHE_PREFIX = "setlist-";
+const CACHE_PREFIX = "setlist-";
 const SHEETS_CACHE = `${CACHE_PREFIX}sheets-v1`;
 
 const keyFor = (arrangementId: string, version: string) =>
@@ -128,23 +128,4 @@ export function listSavedPlans(): SavedPlan[] {
   } catch {
     return [];
   }
-}
-
-/**
- * Removes this member's offline data: saved plan pages, sheets and the saved-plans list.
- * Called on sign-out. App code (no personal data) is kept, and the offline page is saved
- * again so it still works after the next sign-in.
- */
-export async function clearOfflineData() {
-  try {
-    localStorage.removeItem(SAVED_PLANS_KEY);
-  } catch {}
-  if (!hasCaches()) return;
-  const keep = `${CACHE_PREFIX}assets-v1`;
-  const names = await caches.keys();
-  await Promise.all(names.filter((n) => n.startsWith(CACHE_PREFIX) && n !== keep).map((n) => caches.delete(n)));
-  await caches
-    .open(`${CACHE_PREFIX}pages-v1`)
-    .then((cache) => cache.add("/offline"))
-    .catch(() => undefined);
 }

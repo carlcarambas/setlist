@@ -8,8 +8,8 @@ import {
   validationError,
   type FormState,
 } from "@/features/auth/form-state";
-import { inviteMemberSchema, memberStatusSchema, profileSchema } from "@/features/auth/schemas";
-import { getCurrentMember } from "@/lib/auth/member";
+import { deviceNameSchema, inviteMemberSchema, memberStatusSchema, profileSchema } from "@/features/auth/schemas";
+import { getCurrentMember, isAdmin } from "@/lib/auth/member";
 import { publicEnv } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -20,30 +20,38 @@ const DEACTIVATED_BAN = "876000h"; // ~100 years
 
 async function currentAdmin() {
   const member = await getCurrentMember();
-  return member?.status === "active" && member.role === "admin" ? member : null;
+  return isAdmin(member) ? member : null;
 }
 
+/** Invites an administrator (spec v2 §3.3). Members don't have accounts. */
 export async function inviteMember(_prev: FormState, formData: FormData): Promise<FormState> {
-  if (!(await currentAdmin())) return formError("Only administrators can invite members.", keptValues(formData));
+  if (!(await currentAdmin())) return formError("Only administrators can invite administrators.", keptValues(formData));
 
   const parsed = inviteMemberSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return validationError(parsed.error, keptValues(formData));
 
   const admin = createAdminClient();
-  const { error } = await admin.auth.admin.inviteUserByEmail(parsed.data.email, {
+  const { data, error } = await admin.auth.admin.inviteUserByEmail(parsed.data.email, {
     data: { display_name: parsed.data.displayName },
     redirectTo: `${publicEnv().NEXT_PUBLIC_SITE_URL}/accept-invitation`,
   });
 
   if (error) {
     if (error.code === "email_exists" || error.status === 422) {
-      return formError("Someone with that email is already a member or has been invited.", keptValues(formData));
+      return formError("Someone with that email is already an administrator or has been invited.", keptValues(formData));
     }
     if (error.status === 429) {
       return formError("Email sending limit reached. Wait a while, or set up custom SMTP (see README).", keptValues(formData));
     }
     console.error("inviteMember failed", { code: error.code, status: error.status });
     return formError("The invitation couldn't be sent. Please try again.", keptValues(formData));
+  }
+
+  // New accounts start as invited members; only this server path makes them administrators.
+  const { error: roleError } = await admin.from("profiles").update({ role: "admin" }).eq("id", data.user.id);
+  if (roleError) {
+    console.error("inviteMember: role update failed", { code: roleError.code });
+    return formError("The invitation was sent but the role couldn't be set. Please invite again.", keptValues(formData));
   }
 
   refresh();
@@ -81,19 +89,19 @@ export async function setMemberStatus(formData: FormData): Promise<void> {
 
 export async function updateOwnProfile(_prev: FormState, formData: FormData): Promise<FormState> {
   const member = await getCurrentMember();
-  if (member?.status !== "active") return formError("You need to be signed in.", keptValues(formData));
+  if (member?.status !== "active") return formError("This device isn't set up. Reload the page.", keptValues(formData));
 
-  const parsed = profileSchema.safeParse(Object.fromEntries(formData));
+  const parsed = (member.is_anonymous ? deviceNameSchema : profileSchema).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return validationError(parsed.error, keptValues(formData));
 
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("profiles")
-    .update({ display_name: parsed.data.displayName })
+    .update({ display_name: parsed.data.displayName || null })
     .eq("id", member.id)
     .select("id");
-  if (error || !data?.length) return formError("Your profile couldn't be saved. Please try again.", keptValues(formData));
+  if (error || !data?.length) return formError("The name couldn't be saved. Please try again.", keptValues(formData));
 
   refresh();
-  return formSuccess("Profile saved.");
+  return formSuccess("Name saved.");
 }

@@ -46,6 +46,11 @@ export const acceptInvitationSchema = z
 
 export const profileSchema = z.object({ displayName: displayNameSchema });
 
+/** A member device's optional name, shown in plan activity (spec v2 ACC-04). Empty clears it. */
+export const deviceNameSchema = z.object({
+  displayName: z.string().trim().max(100, "Use at most 100 characters."),
+});
+
 export const inviteMemberSchema = z.object({ email: emailSchema, displayName: displayNameSchema });
 
 export const memberStatusSchema = z.object({

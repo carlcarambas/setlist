@@ -9,17 +9,18 @@ import { initialFormState } from "@/features/auth/form-state";
 import { inviteMember, setMemberStatus, updateOwnProfile } from "@/features/members/actions";
 import { updateAppSettings } from "@/features/settings/actions";
 
-export function ProfileForm({ displayName }: { displayName: string }) {
+export function ProfileForm({ displayName, optional = false }: { displayName: string; optional?: boolean }) {
   const [state, action] = useActionState(updateOwnProfile, initialFormState);
   return (
     <form action={action} className="grid max-w-md gap-4" noValidate>
       <FormMessage state={state} />
       <Field
         name="displayName"
-        label="Your name"
-        autoComplete="name"
+        label={optional ? "Device name (optional)" : "Your name"}
+        autoComplete={optional ? "off" : "name"}
+        maxLength={100}
         defaultValue={state.values?.displayName ?? displayName}
-        required
+        required={!optional}
         errors={state.fieldErrors?.displayName}
       />
       <div className="sm:w-40">

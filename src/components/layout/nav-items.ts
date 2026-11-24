@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   ListMusic,
   Settings,
-  Users,
   Library,
   SlidersHorizontal,
   UserCog,
@@ -16,18 +15,17 @@ export type NavItem = {
   icon: LucideIcon;
 };
 
-// Primary navigation (spec §6).
+// Primary navigation (spec v2 §6).
 export const primaryNav: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/library", label: "Music Library", icon: Library },
-  { href: "/plans", label: "My Plans", icon: ListMusic },
+  { href: "/dashboard", label: "Home", icon: LayoutDashboard },
+  { href: "/library", label: "Library", icon: Library },
+  { href: "/plans", label: "Plans", icon: ListMusic },
   { href: "/events", label: "Events", icon: CalendarDays },
-  { href: "/shared", label: "Shared with Me", icon: Users },
 ];
 
-// Administrator-only navigation (spec §6).
+// Administrator-only navigation (spec v2 §6).
 export const adminNav: NavItem[] = [
-  { href: "/admin/members", label: "Members", icon: UserCog },
+  { href: "/admin/administrators", label: "Administrators", icon: UserCog },
   { href: "/admin/settings", label: "App Settings", icon: SlidersHorizontal },
 ];
 
@@ -39,7 +37,7 @@ export const mobileLabels: Record<string, string> = {
   "/library": "Library",
   "/plans": "Plans",
   "/events": "Events",
-  "/shared": "Shared",
+  "/settings": "Settings",
 };
 
 export function isActive(pathname: string, href: string) {

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Suspense } from "react";
 import Link from "next/link";
-import { CalendarDays, ListMusic, Music, Plus, Upload, Users } from "lucide-react";
+import { CalendarDays, ListMusic, Music, Plus, Upload } from "lucide-react";
 import { EventDateLine } from "@/components/events/event-list";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionSkeleton } from "@/components/layout/section-skeleton";
@@ -10,9 +10,8 @@ import { relativeTime } from "@/components/plans/plan-status";
 import { Button } from "@/components/ui/button";
 import { listEvents } from "@/features/events/queries";
 import { listRecentMusic } from "@/features/library/queries";
-import { listMyPlans } from "@/features/plans/queries";
-import { listSharedWithMe } from "@/features/sharing/queries";
-import { requireActiveMember } from "@/lib/auth/member";
+import { listPlans } from "@/features/plans/queries";
+import { isAdmin, requireActiveMember } from "@/lib/auth/member";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -25,20 +24,9 @@ export default function DashboardPage() {
         title="Dashboard"
         description="Upcoming events, your recent plans and new music."
         actions={
-          <>
-            <Button asChild className="h-11 gap-2">
-              <Link href="/plans">
-                <Plus className="size-4" aria-hidden />
-                New plan
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="h-11 gap-2">
-              <Link href="/library/new">
-                <Upload className="size-4" aria-hidden />
-                Upload music
-              </Link>
-            </Button>
-          </>
+          <Suspense fallback={<NewPlanAction />}>
+            <QuickActions />
+          </Suspense>
         }
       />
       <Suspense fallback={<SectionSkeleton />}>
@@ -48,12 +36,40 @@ export default function DashboardPage() {
   );
 }
 
-async function Widgets() {
+function NewPlanAction() {
+  return (
+    <Button asChild className="h-11 gap-2">
+      <Link href="/plans">
+        <Plus className="size-4" aria-hidden />
+        New plan
+      </Link>
+    </Button>
+  );
+}
+
+/** "Upload music" only for administrators (spec v2 §4.6). */
+async function QuickActions() {
   const member = await requireActiveMember();
-  const [events, plans, shared, music] = await Promise.all([
+  return (
+    <>
+      <NewPlanAction />
+      {isAdmin(member) ? (
+        <Button asChild variant="outline" className="h-11 gap-2">
+          <Link href="/library/new">
+            <Upload className="size-4" aria-hidden />
+            Upload music
+          </Link>
+        </Button>
+      ) : null}
+    </>
+  );
+}
+
+async function Widgets() {
+  await requireActiveMember();
+  const [events, plans, music] = await Promise.all([
     listEvents({ past: false, limit: LIMIT }),
-    listMyPlans(member.id, false),
-    listSharedWithMe(member.id),
+    listPlans(false, LIMIT),
     listRecentMusic(LIMIT),
   ]);
 
@@ -67,17 +83,10 @@ async function Widgets() {
           </Row>
         ))}
       </Widget>
-      <Widget id="my-plans" title="My recent plans" icon={ListMusic} href="/plans" empty="You haven't created a plan yet.">
-        {plans.slice(0, LIMIT).map((p) => (
+      <Widget id="plans" title="Recently updated plans" icon={ListMusic} href="/plans" empty="No plans yet.">
+        {plans.map((p) => (
           <Row key={p.id} href={`/plans/${p.id}`} title={p.title}>
             {p.songCount} {p.songCount === 1 ? "song" : "songs"} · updated {relativeTime(p.updated_at)}
-          </Row>
-        ))}
-      </Widget>
-      <Widget id="shared" title="Shared with me" icon={Users} href="/shared" empty="Nothing has been shared with you yet.">
-        {shared.slice(0, LIMIT).map((p) => (
-          <Row key={p.id} href={`/plans/${p.id}`} title={p.title}>
-            {p.ownerName} · {p.permission === "editor" ? "can edit" : "can view"}
           </Row>
         ))}
       </Widget>

@@ -1,6 +1,6 @@
 import "server-only";
 import { getAppSettings } from "@/features/settings/queries";
-import type { Member } from "@/lib/auth/member";
+import { isAdmin, type Member } from "@/lib/auth/member";
 import { createClient } from "@/lib/supabase/server";
 import { todayIn } from "./schemas";
 
@@ -39,8 +39,7 @@ export async function getEvent(id: string, member: Member) {
       `id, title, description, event_date, start_time, created_by, updated_at,
        creator:profiles!events_created_by_fkey(display_name),
        event_plans(id, created_at,
-         plan:plans(id, title, status, updated_at, owner_id,
-           owner:profiles!plans_owner_id_fkey(display_name), plan_items(count)))`,
+         plan:plans(id, title, status, updated_at, plan_items(count)))`,
     )
     .eq("id", id)
     .order("created_at", { referencedTable: "event_plans" })
@@ -48,7 +47,6 @@ export async function getEvent(id: string, member: Member) {
   if (error) throw new Error("Could not load this event.");
   if (!data) return null;
 
-  const editable = await editablePlanIds(member.id);
   const today = await churchToday();
   return {
     id: data.id,
@@ -57,7 +55,8 @@ export async function getEvent(id: string, member: Member) {
     eventDate: data.event_date,
     startTime: data.start_time,
     creatorName: data.creator?.display_name ?? "a member",
-    canManage: data.created_by === member.id || member.role === "admin",
+    // Everyone edits events and attaches plans; only administrators delete (spec v2 §4.4).
+    canDelete: isAdmin(member),
     isPast: data.event_date < today,
     plans: data.event_plans
       .filter((ep) => ep.plan)
@@ -65,36 +64,22 @@ export async function getEvent(id: string, member: Member) {
         id: ep.plan!.id,
         title: ep.plan!.title,
         status: ep.plan!.status,
-        ownerName: ep.plan!.owner_id === member.id ? "you" : (ep.plan!.owner?.display_name ?? "a member"),
         songCount: ep.plan!.plan_items[0]?.count ?? 0,
-        canDetach: editable.has(ep.plan!.id),
       })),
   };
 }
 
-/** Ids of plans the member owns or edits (who may attach or detach them). */
-async function editablePlanIds(memberId: string) {
-  const plans = await listAttachablePlans(memberId, true);
-  return new Set(plans.map((p) => p.id));
-}
-
-/** Plans the member can attach to an event: owned or shared as editor; archived ones only when asked. */
-export async function listAttachablePlans(memberId: string, includeArchived = false) {
+/** Plans that can be attached to an event: every plan that isn't archived (spec v2 §4.3). */
+export async function listAttachablePlans() {
   const supabase = await createClient();
-  const [owned, shared] = await Promise.all([
-    supabase.from("plans").select("id, title, status, updated_at").eq("owner_id", memberId).limit(200),
-    supabase
-      .from("plan_shares")
-      .select("plan:plans!inner(id, title, status, updated_at)")
-      .eq("user_id", memberId)
-      .eq("permission", "editor")
-      .limit(200),
-  ]);
-  const all = [...(owned.data ?? []), ...(shared.data ?? []).map((s) => s.plan)];
-  return all
-    .filter((p) => includeArchived || p.status !== "archived")
-    .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
-    .map((p) => ({ id: p.id, title: p.title, status: p.status }));
+  const { data, error } = await supabase
+    .from("plans")
+    .select("id, title")
+    .neq("status", "archived")
+    .order("updated_at", { ascending: false })
+    .limit(200);
+  if (error) return [];
+  return data;
 }
 
 /** Events a plan belongs to, soonest first. */

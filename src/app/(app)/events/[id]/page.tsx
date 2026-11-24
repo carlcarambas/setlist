@@ -27,11 +27,11 @@ async function Event({ params }: Pick<PageProps<"/events/[id]">, "params">) {
   const member = await requireActiveMember();
   const id = z.uuid().safeParse((await params).id);
   if (!id.success) notFound();
-  const [event, myPlans] = await Promise.all([getEvent(id.data, member), listAttachablePlans(member.id)]);
+  const [event, plans] = await Promise.all([getEvent(id.data, member), listAttachablePlans()]);
   if (!event) notFound();
 
   const attached = new Set(event.plans.map((p) => p.id));
-  const options = myPlans.filter((p) => !attached.has(p.id)).map((p) => ({ id: p.id, label: p.title }));
+  const options = plans.filter((p) => !attached.has(p.id)).map((p) => ({ id: p.id, label: p.title }));
 
   return (
     <>
@@ -52,17 +52,15 @@ async function Event({ params }: Pick<PageProps<"/events/[id]">, "params">) {
           <p className="text-sm text-muted-foreground">Created by {event.creatorName}</p>
           {event.description ? <p className="max-w-prose pt-1 whitespace-pre-line">{event.description}</p> : null}
         </div>
-        {event.canManage ? (
-          <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline" className="h-11 gap-2">
-              <Link href={`/events/${event.id}/edit`}>
-                <Pencil className="size-4" aria-hidden />
-                Edit
-              </Link>
-            </Button>
-            <DeleteEventButton eventId={event.id} title={event.title} />
-          </div>
-        ) : null}
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline" className="h-11 gap-2">
+            <Link href={`/events/${event.id}/edit`}>
+              <Pencil className="size-4" aria-hidden />
+              Edit
+            </Link>
+          </Button>
+          {event.canDelete ? <DeleteEventButton eventId={event.id} title={event.title} /> : null}
+        </div>
       </div>
 
       <section aria-labelledby="event-plans-heading" className="space-y-4">
@@ -72,7 +70,7 @@ async function Event({ params }: Pick<PageProps<"/events/[id]">, "params">) {
         {event.plans.length === 0 ? (
           <EmptyState icon={ListMusic} title="No plans to show">
             {options.length ? (
-              "Add one of your plans below."
+              "Add a plan below."
             ) : (
               <>
                 <Link href="/plans" className="underline underline-offset-4">
@@ -80,8 +78,7 @@ async function Event({ params }: Pick<PageProps<"/events/[id]">, "params">) {
                 </Link>
                 , then add it here.
               </>
-            )}{" "}
-            Plans shared with others but not with you aren&apos;t listed.
+            )}
           </EmptyState>
         ) : (
           <ul className="divide-y rounded-lg border">
@@ -92,14 +89,12 @@ async function Event({ params }: Pick<PageProps<"/events/[id]">, "params">) {
                     {p.title}
                   </Link>
                   <p className="text-sm text-muted-foreground">
-                    {p.songCount} {p.songCount === 1 ? "song" : "songs"} · by {p.ownerName}
+                    {p.songCount} {p.songCount === 1 ? "song" : "songs"}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   {p.status !== "draft" ? <PlanStatusBadge status={p.status} /> : null}
-                  {p.canDetach ? (
-                    <DetachButton eventId={event.id} planId={p.id} label={`Remove ${p.title} from this event`} />
-                  ) : null}
+                  <DetachButton eventId={event.id} planId={p.id} label={`Remove ${p.title} from this event`} />
                 </div>
               </li>
             ))}
@@ -110,9 +105,7 @@ async function Event({ params }: Pick<PageProps<"/events/[id]">, "params">) {
             <AttachForm pick="plan" fixedId={event.id} options={options} />
           </div>
         ) : null}
-        <p className="text-sm text-muted-foreground">
-          Removing a plan from an event keeps the plan. Members only see the plans they have access to.
-        </p>
+        <p className="text-sm text-muted-foreground">Removing a plan from an event keeps the plan.</p>
       </section>
     </>
   );

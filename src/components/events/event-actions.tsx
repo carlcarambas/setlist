@@ -80,7 +80,7 @@ export function AttachForm({
   return (
     <form action={action} className="grid gap-2">
       <input type="hidden" name={pick === "plan" ? "eventId" : "planId"} value={fixedId} />
-      <Label htmlFor={fieldId}>{pick === "plan" ? "Add one of your plans" : "Add to an upcoming event"}</Label>
+      <Label htmlFor={fieldId}>{pick === "plan" ? "Add a plan" : "Add to an upcoming event"}</Label>
       <div className="flex gap-2">
         <select id={fieldId} name={pick === "plan" ? "planId" : "eventId"} className={selectClass} required defaultValue="">
           <option value="" disabled>

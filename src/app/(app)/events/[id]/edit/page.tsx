@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import { EventForm } from "@/components/events/event-form";
@@ -25,7 +25,6 @@ async function Edit({ params }: Pick<PageProps<"/events/[id]/edit">, "params">) 
   if (!id.success) notFound();
   const event = await getEvent(id.data, member);
   if (!event) notFound();
-  if (!event.canManage) redirect(`/events/${event.id}`);
 
   return (
     <>

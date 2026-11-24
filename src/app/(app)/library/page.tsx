@@ -9,7 +9,7 @@ import { LibrarySearchForm, searchHref } from "@/components/music/library-search
 import { Button } from "@/components/ui/button";
 import { listCategories, searchLibrary } from "@/features/library/queries";
 import { librarySearchSchema } from "@/features/library/schemas";
-import { requireActiveMember } from "@/lib/auth/member";
+import { isAdmin, requireActiveMember } from "@/lib/auth/member";
 
 export const metadata: Metadata = { title: "Music Library" };
 
@@ -20,12 +20,9 @@ export default function LibraryPage({ searchParams }: PageProps<"/library">) {
         title="Music Library"
         description="Search, preview and download the ministry's sheet music."
         actions={
-          <Button asChild className="h-11 gap-2">
-            <Link href="/library/new">
-              <Plus className="size-4" aria-hidden />
-              Add music
-            </Link>
-          </Button>
+          <Suspense>
+            <AddMusicAction />
+          </Suspense>
         }
       />
       <Suspense fallback={<SectionSkeleton />}>
@@ -35,8 +32,21 @@ export default function LibraryPage({ searchParams }: PageProps<"/library">) {
   );
 }
 
+/** Administrators only (spec v2 §4.2). */
+async function AddMusicAction() {
+  if (!isAdmin(await requireActiveMember())) return null;
+  return (
+    <Button asChild className="h-11 gap-2">
+      <Link href="/library/new">
+        <Plus className="size-4" aria-hidden />
+        Add music
+      </Link>
+    </Button>
+  );
+}
+
 async function LibraryResults({ searchParams }: Pick<PageProps<"/library">, "searchParams">) {
-  await requireActiveMember();
+  const admin = isAdmin(await requireActiveMember());
   const search = librarySearchSchema.parse(await searchParams);
   const [{ pieces, total, pageCount }, categories] = await Promise.all([
     searchLibrary(search),
@@ -55,10 +65,16 @@ async function LibraryResults({ searchParams }: Pick<PageProps<"/library">, "sea
           </EmptyState>
         ) : (
           <EmptyState icon={Library} title="The library is empty">
-            <Link href="/library/new" className="underline underline-offset-4">
-              Add the first song
-            </Link>{" "}
-            by uploading a PDF.
+            {admin ? (
+              <>
+                <Link href="/library/new" className="underline underline-offset-4">
+                  Add the first song
+                </Link>{" "}
+                by uploading a PDF.
+              </>
+            ) : (
+              "An administrator adds the music. Check back soon."
+            )}
           </EmptyState>
         )
       ) : (

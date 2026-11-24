@@ -4,7 +4,7 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { formError, keptValues, validationError, type FormState } from "@/features/auth/form-state";
-import { getCurrentMember } from "@/lib/auth/member";
+import { getCurrentMember, isAdmin } from "@/lib/auth/member";
 import { createClient } from "@/lib/supabase/server";
 import { findArrangementsForPlan } from "./queries";
 import {
@@ -130,6 +130,16 @@ export async function duplicatePlan(formData: FormData): Promise<void> {
   const supabase = await createClient();
   const { data } = await supabase.rpc("duplicate_plan", { p_plan_id: planId.data });
   if (data) redirect(`/plans/${data}/edit`);
+}
+
+/** Permanent delete: administrators only (spec v2 D4). The database function re-checks. */
+export async function deletePlan(formData: FormData): Promise<void> {
+  if (!isAdmin(await getCurrentMember())) return;
+  const planId = z.uuid().safeParse(formData.get("planId"));
+  if (!planId.success) return;
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("delete_plan", { p_plan_id: planId.data });
+  if (!error) redirect("/plans");
 }
 
 export async function searchSongsForPlan(query: string) {

@@ -62,6 +62,6 @@ export function formatEventTime(time: string | null) {
 /** Database errors when attaching a plan, as a message for the member. */
 export function attachErrorMessage(code: string | undefined) {
   if (code === "23505") return "That plan is already part of this event.";
-  if (code === "42501") return "You can only add plans you own or can edit, and not archived ones.";
+  if (code === "42501") return "Archived plans can't be added to an event.";
   return "The plan couldn't be added. Please try again.";
 }

@@ -1,14 +1,13 @@
 import { Suspense } from "react";
-import Link from "next/link";
-import { Settings } from "lucide-react";
 import { Brand } from "@/components/layout/brand";
 import { MemberMenu } from "@/components/layout/member-menu";
 import { OfflineBanner } from "@/components/offline/offline-banner";
 import { MobileTabBar, MobileTabBarLinks } from "@/components/layout/mobile-tab-bar";
 import { SidebarNav, SidebarNavLinks } from "@/components/layout/sidebar-nav";
-import { requireActiveMember } from "@/lib/auth/member";
+import { isAdmin, requireActiveMember } from "@/lib/auth/member";
 
-// Only active members get past these components; RLS enforces the same rule on the data.
+// Only active sessions (member devices and administrators) get past these components; RLS enforces
+// the same rule on the data.
 async function ActiveMemberContent({ children }: { children: React.ReactNode }) {
   await requireActiveMember();
   return children;
@@ -18,7 +17,7 @@ async function MemberSidebar() {
   const member = await requireActiveMember();
   return (
     <>
-      <SidebarNav isAdmin={member.role === "admin"} />
+      <SidebarNav isAdmin={isAdmin(member)} />
       <div className="mt-auto">
         <MemberMenu member={member} />
       </div>
@@ -56,14 +55,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       <div className="flex min-h-dvh flex-col">
         <header className="sticky top-0 z-30 flex items-center justify-between border-b bg-background/95 px-4 pt-[env(safe-area-inset-top)] backdrop-blur md:hidden">
-          <Brand />
-          <Link
-            href="/settings"
-            aria-label="Settings"
-            className="flex size-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent"
-          >
-            <Settings className="size-5" aria-hidden />
-          </Link>
+          <div className="flex min-h-14 items-center">
+            <Brand />
+          </div>
         </header>
 
         <OfflineBanner />
