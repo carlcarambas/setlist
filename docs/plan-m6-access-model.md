@@ -75,7 +75,7 @@ model without rewriting every policy.
 | Settings | Device name (optional), *Sign in as administrator* or *Sign out*. Sign-out no longer clears offline copies (spec §4.1), and the device continues as a member. |
 | Administrators page | `/admin/members` → `/admin/administrators`: list, invite (role admin), deactivate/reactivate; last-admin guard message. |
 | Indexing | `robots.ts` disallowing all; root metadata `robots: noindex`. |
-| Env | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (public). `SUPABASE_AUTH_CAPTCHA_SECRET` only in Supabase config, never in Netlify or the browser. `.env.example` and README updated. Local dev uses Cloudflare's published always-pass test keys. |
+| Env | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (public). `SUPABASE_AUTH_CAPTCHA_SECRET` only in Supabase config, never in the app host or the browser. `.env.example` and README updated. Local dev uses Cloudflare's published always-pass test keys. |
 | Seed | `admin@setlist.test` (active admin) and `invited@setlist.test` (invited admin). `member@setlist.test` is removed: members are anonymous now. |
 
 ---
@@ -135,7 +135,7 @@ model without rewriting every policy.
 | Anonymous sign-in needs a connection | The first visit is online by nature; offline arrives in Milestone 7. The gate shows a retry if it fails. |
 | Clearing browser data creates a new identity | Acceptable: identities own nothing (D1). Old anonymous users simply stay unused. |
 | A blocked device can clear data and come back | Blocking is a speed bump; the real protections are CAPTCHA, rate limits, archive-not-delete and the activity log. |
-| Cloud setup | When deploying: enable anonymous sign-ins and Turnstile in the Supabase dashboard, add the Turnstile site key to Netlify, push migrations 3–6. **No deploy happens in this milestone** unless you ask. |
+| Cloud setup | When deploying: enable anonymous sign-ins and Turnstile in the Supabase dashboard, add the Turnstile site key to the app host (Railway), push migrations 3–6. **No deploy happens in this milestone** unless you ask. |
 | Admin signing in on a device | That device's anonymous identity is replaced by the admin session; signing out creates a fresh anonymous identity. Nothing is lost, since plans aren't owned. |
 
 ---

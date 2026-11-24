@@ -2,9 +2,11 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   env: {
-    // On Netlify, fall back to the project's main address (the built-in `URL` build variable)
-    // so NEXT_PUBLIC_SITE_URL doesn't have to be set by hand. A value set explicitly wins.
-    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || process.env.URL,
+    // On Railway, fall back to the service's public domain (RAILWAY_PUBLIC_DOMAIN, provided to builds,
+    // without a scheme) so NEXT_PUBLIC_SITE_URL doesn't have to be set by hand. A value set explicitly wins.
+    NEXT_PUBLIC_SITE_URL:
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : undefined),
   },
   cacheComponents: true,
   partialPrefetching: true,

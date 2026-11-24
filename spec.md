@@ -417,7 +417,7 @@ No NestJS, no microservices, no local server.
 | Offline shell and assets | Service worker (hand-written or generated; decided in the plan) |
 | PDF viewing | PDF.js / react-pdf |
 | Drag and drop | dnd-kit |
-| Hosting | Netlify |
+| Hosting | Railway (Node.js server running `next start`) |
 | Source control | GitHub |
 
 ### 7.3 High-level architecture
@@ -433,7 +433,7 @@ Device (browser / installed PWA)
   Supabase: Auth (anonymous + admin) · PostgreSQL (RLS) · Storage (private)
         ^
         |  admin pages, uploads, admin actions (server-side, online only)
-  Next.js on Netlify
+  Next.js on Railway
 ```
 
 ### 7.4 Rules
@@ -504,7 +504,7 @@ Unchanged: one church now; keep an `organization_id` easy to add later.
 
 - Private bucket `music-sheets`, object path `{music_piece_id}/{arrangement_id}/{file}.pdf`.
 - Reading requires a valid session (anonymous or administrator); the app gets short-lived signed URLs
-  through a route that authorizes and redirects (it never streams PDF bytes through Netlify).
+  through a route that authorizes and redirects (it never streams PDF bytes through the app server).
 - Writing requires an active administrator.
 - Downloaded copies live in the device's Cache Storage, keyed by arrangement and file version.
 - Backups: scheduled database dump and storage copy off-site; restoration tested once before launch.
@@ -551,11 +551,12 @@ safely, and returns a minimal typed result.
 
 ## 12. Hosting and Budget
 
-- Netlify Free, Supabase Free and GitHub Free during development; Supabase Pro (about US$25/month)
-  once the ministry relies on it (backups, no pausing, 250 GB egress).
+- Hosting on Railway (changed from Netlify on 2026-11-24 for cost): one always-on Node.js service, billed
+  by usage. Set a usage limit. Supabase Free and GitHub Free during development; Supabase Pro (about
+  US$25/month) once the ministry relies on it (backups, no pausing, 250 GB egress).
 - **Egress:** every download of a sheet counts against Supabase egress (Free: 5 GB/month). Default to
   downloading per plan; show sizes before bulk downloads; review monthly.
-- The browser-rendered member area reduces Netlify function usage.
+- The browser-rendered member area keeps the app server's CPU and bandwidth use low.
 - Custom SMTP is still required for administrator invitations and password resets.
 - Prices change; check the providers' pricing pages before subscribing.
 

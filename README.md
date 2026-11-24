@@ -11,7 +11,7 @@ One responsive web app for desktop and mobile, installable from the browser.
 - **Principles:** [`.specify/memory/constitution.md`](.specify/memory/constitution.md).
 
 **Stack:** Next.js 16 (App Router, TypeScript) · Tailwind CSS 4 + shadcn/ui · Supabase (Postgres, Auth,
-Storage) · Netlify.
+Storage) · Railway.
 
 ## Status
 
@@ -159,7 +159,7 @@ See [`.env.example`](.env.example).
 | `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase API URL |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Yes | Publishable key; all access is governed by RLS |
 | `SUPABASE_SECRET_KEY` | **No** | Bypasses RLS. Server only, used solely in `src/lib/supabase/admin.ts` |
-| `NEXT_PUBLIC_SITE_URL` | Yes | Base URL for auth email redirects. Optional on Netlify (defaults to the project's main address) |
+| `NEXT_PUBLIC_SITE_URL` | Yes | Base URL for auth email redirects. Optional on Railway (defaults to `https://` + `RAILWAY_PUBLIC_DOMAIN`) |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Yes | Cloudflare Turnstile site key for the bot check (public by design). Its secret goes only in Supabase |
 | `NEXT_PUBLIC_MAX_UPLOAD_MB` | Yes | Optional. PDF size limit (default 20); keep in sync with `supabase/config.toml` |
 | `SUPABASE_PROJECT_ID` | n/a | Optional, local only. Used by `npm run db:types:remote` |
@@ -174,11 +174,10 @@ See [`.env.example`](.env.example).
    register by email themselves get no administrator rights and can't sign in to the app.
 3. **Authentication → Attack Protection (bot protection):** enable CAPTCHA with **Cloudflare Turnstile** and
    paste the Turnstile **secret key**. Create the Turnstile widget (free) in the Cloudflare dashboard for the
-   site's domain; its **site key** goes into Netlify as `NEXT_PUBLIC_TURNSTILE_SITE_KEY`.
-4. **Authentication → URL Configuration:** set the Site URL to the Netlify URL, and add redirect URLs:
+   site's domain; its **site key** goes into Railway as `NEXT_PUBLIC_TURNSTILE_SITE_KEY`.
+4. **Authentication → URL Configuration:** set the Site URL to the Railway URL, and add redirect URLs:
    - `http://localhost:3000/**`
-   - `https://<site>.netlify.app/**`
-   - `https://deploy-preview-*--<site>.netlify.app/**`
+   - `https://<service>.up.railway.app/**` (and your custom domain, if you add one)
 5. Run `npx supabase login`, then link the project and push migrations (see [Database changes](#database-changes)).
 6. **Email templates** (Authentication → Emails): replace the **Invite user** and **Reset password**
    templates with the HTML in `supabase/templates/invite.html` and `recovery.html`. Their links go to
@@ -199,16 +198,23 @@ See [`.env.example`](.env.example).
    3. Sign in to the app (**Settings → Administrator sign in**). Invite other administrators from
       **Administrators**. Members need nothing: they just open the app.
 
-### Netlify
+### Railway
 
-1. **Add new site → Import from Git** and pick this GitHub repository. Netlify detects Next.js; the build
-   settings come from `netlify.toml`.
-2. **Project configuration → Environment variables:** add `NEXT_PUBLIC_SUPABASE_URL`,
-   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `SUPABASE_SECRET_KEY`
-   (mark it as containing secret values).
-   `NEXT_PUBLIC_SITE_URL` is optional: without it the app uses the project's main Netlify address.
-3. Deploy. Netlify's free plan counts each **production** deploy against its monthly credits. Merge to `main`
-   once per milestone and use deploy previews for work in progress.
+Railway runs the app as an ordinary Node.js server (`npm run build`, then `npm start`, which runs
+`next start` on the `PORT` Railway provides). Its default builder (Railpack) detects this from
+`package.json`; there is no Railway config file (Railway has deprecated `railway.json`).
+
+1. **New Project → Deploy from GitHub repo** and pick this repository.
+2. **Variables:** add `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`,
+   `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `SUPABASE_SECRET_KEY` (sealed). `NEXT_PUBLIC_*` values are built into
+   the browser code, so redeploy after changing them. `NEXT_PUBLIC_SITE_URL` is optional: without it the
+   app uses `https://` + the service's public domain.
+3. **Settings → Networking:** generate a public domain (or add a custom one), then put it in Supabase's
+   URL configuration (above).
+4. **Settings → Deploy:** set the healthcheck path to `/robots.txt` (static and reachable without a
+   session), and keep the restart policy on failure.
+5. Railway bills by usage. Deploys from `main` go live, so merge once per milestone and set a usage
+   limit in the workspace's billing settings.
 
 ## Security rules
 
