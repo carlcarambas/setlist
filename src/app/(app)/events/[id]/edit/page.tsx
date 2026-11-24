@@ -29,7 +29,7 @@ async function Edit({ params }: Pick<PageProps<"/events/[id]/edit">, "params">) 
   return (
     <>
       <Link
-        href={`/events/${event.id}`}
+        href={`/event?id=${event.id}`}
         className="mb-4 inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="size-4" aria-hidden />

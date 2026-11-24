@@ -2,34 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
-import { escapeLike, PAGE_SIZE, type LibrarySearch } from "./schemas";
 import { SHEETS_BUCKET, SIGNED_URL_TTL_SECONDS } from "./storage";
-
-export async function searchLibrary(search: LibrarySearch) {
-  const supabase = await createClient();
-  const from = (search.page - 1) * PAGE_SIZE;
-
-  let query = supabase
-    .from("music_pieces")
-    .select("id, title, composer, category, tags, status, arrangements(count)", { count: "exact" })
-    .order("title")
-    .order("id")
-    .range(from, from + PAGE_SIZE - 1);
-
-  if (!search.archived) query = query.eq("status", "active");
-  if (search.q) query = query.ilike("title", `%${escapeLike(search.q)}%`);
-  if (search.category) query = query.eq("category", search.category);
-  if (search.tag) query = query.contains("tags", [search.tag]);
-
-  const { data, count, error } = await query;
-  if (error) throw new Error("Could not search the library.");
-
-  return {
-    pieces: data.map((p) => ({ ...p, arrangementCount: p.arrangements[0]?.count ?? 0 })),
-    total: count ?? 0,
-    pageCount: Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE)),
-  };
-}
 
 export async function listCategories() {
   const supabase = await createClient();
@@ -93,11 +66,6 @@ export async function signedSheetUrl(storagePath: string, download?: string, cli
   return url.toString();
 }
 
-export function formatFileSize(bytes: number) {
-  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-}
-
 /** Admin only: uploads started more than 24 hours ago that never finished. */
 export async function countStaleUploads() {
   const { createAdminClient } = await import("@/lib/supabase/admin");
@@ -111,15 +79,3 @@ export async function countStaleUploads() {
   return count ?? 0;
 }
 
-/** Most recently added songs that have an active sheet, for the dashboard. */
-export async function listRecentMusic(limit = 5) {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("music_pieces")
-    .select("id, title, composer, created_at")
-    .eq("status", "active")
-    .order("created_at", { ascending: false })
-    .limit(limit);
-  if (error) throw new Error("Could not load recent music.");
-  return data;
-}

@@ -108,7 +108,7 @@ export function UploadForm({
       }
 
       toast.success(isNewPiece ? "Music added." : "Arrangement added.");
-      router.push(`/library/${result.pieceId}`);
+      router.push(`/song?id=${result.pieceId}`);
     } catch {
       setState({ status: "error", message: "Something went wrong. Check your connection and try again." });
     } finally {
@@ -232,7 +232,7 @@ function DuplicateWarning({ duplicates }: { duplicates: DuplicateHint[] }) {
         <ul className="mt-1 list-disc pl-5">
           {duplicates.map((d) => (
             <li key={d.musicPieceId}>
-              <Link href={`/library/${d.musicPieceId}`} target="_blank" className="underline underline-offset-4">
+              <Link href={`/song?id=${d.musicPieceId}`} target="_blank" className="underline underline-offset-4">
                 {d.title}
               </Link>{" "}
               ({d.reason === "same_file" ? "same file" : "similar title"})

@@ -25,7 +25,7 @@ async function NewArrangement({ params }: Pick<PageProps<"/library/[id]/arrangem
   if (!id.success) notFound();
   const piece = await getPiece(id.data);
   if (!piece) notFound();
-  if (piece.status === "archived") redirect(`/library/${piece.id}`);
+  if (piece.status === "archived") redirect(`/song?id=${piece.id}`);
 
   return (
     <>

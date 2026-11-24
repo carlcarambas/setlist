@@ -1,34 +1,32 @@
-import type { Metadata } from "next";
-import { Suspense } from "react";
+"use client";
+
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeft, ListMusic, Pencil } from "lucide-react";
-import { z } from "zod";
 import { AttachForm, DeleteEventButton, DetachButton } from "@/components/events/event-actions";
 import { EventDateLine } from "@/components/events/event-list";
 import { EmptyState } from "@/components/layout/empty-state";
-import { SectionSkeleton } from "@/components/layout/section-skeleton";
+import { LocalSkeleton, NotOnDevice, OnlineOnly } from "@/components/local/states";
 import { PlanStatusBadge } from "@/components/plans/plan-status";
 import { Button } from "@/components/ui/button";
-import { getEvent, listAttachablePlans } from "@/features/events/queries";
-import { requireActiveMember } from "@/lib/auth/member";
+import { localDb } from "@/features/local-db/db";
+import { useChurchToday, useIsAdmin } from "@/features/local-db/hooks";
+import { getEvent, listAttachablePlans } from "@/features/local-db/queries";
+import { useLiveQuery } from "@/features/local-db/use-live-query";
+import { useOnline } from "@/features/offline/use-online";
 
-export const metadata: Metadata = { title: "Event" };
+export function EventView() {
+  const id = useSearchParams().get("id") ?? "";
+  const today = useChurchToday();
+  const isAdmin = useIsAdmin();
+  const online = useOnline();
+  const event = useLiveQuery(async () => (today ? getEvent(localDb(), id, today) : undefined), [id, today]);
+  const plans = useLiveQuery(() => listAttachablePlans(localDb()), []) ?? [];
 
-export default function EventPage({ params }: PageProps<"/events/[id]">) {
-  return (
-    <Suspense fallback={<SectionSkeleton />}>
-      <Event params={params} />
-    </Suspense>
-  );
-}
-
-async function Event({ params }: Pick<PageProps<"/events/[id]">, "params">) {
-  const member = await requireActiveMember();
-  const id = z.uuid().safeParse((await params).id);
-  if (!id.success) notFound();
-  const [event, plans] = await Promise.all([getEvent(id.data, member), listAttachablePlans()]);
-  if (!event) notFound();
+  if (event === undefined) return <LocalSkeleton />;
+  if (event === null) {
+    return <NotOnDevice what="event" backHref="/events" backLabel="Back to events" />;
+  }
 
   const attached = new Set(event.plans.map((p) => p.id));
   const options = plans.filter((p) => !attached.has(p.id)).map((p) => ({ id: p.id, label: p.title }));
@@ -46,21 +44,23 @@ async function Event({ params }: Pick<PageProps<"/events/[id]">, "params">) {
         <div className="min-w-0 space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">{event.title}</h1>
           <p className="text-muted-foreground">
-            <EventDateLine eventDate={event.eventDate} startTime={event.startTime} />
+            <EventDateLine eventDate={event.event_date} startTime={event.start_time} />
             {event.isPast ? " · past" : null}
           </p>
-          <p className="text-sm text-muted-foreground">Created by {event.creatorName}</p>
+          {event.creatorName ? <p className="text-sm text-muted-foreground">Created by {event.creatorName}</p> : null}
           {event.description ? <p className="max-w-prose pt-1 whitespace-pre-line">{event.description}</p> : null}
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline" className="h-11 gap-2">
-            <Link href={`/events/${event.id}/edit`}>
-              <Pencil className="size-4" aria-hidden />
-              Edit
-            </Link>
-          </Button>
-          {event.canDelete ? <DeleteEventButton eventId={event.id} title={event.title} /> : null}
-        </div>
+        <OnlineOnly label="Editing needs a connection">
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline" className="h-11 gap-2">
+              <Link href={`/events/${event.id}/edit`}>
+                <Pencil className="size-4" aria-hidden />
+                Edit
+              </Link>
+            </Button>
+            {isAdmin ? <DeleteEventButton eventId={event.id} title={event.title} /> : null}
+          </div>
+        </OnlineOnly>
       </div>
 
       <section aria-labelledby="event-plans-heading" className="space-y-4">
@@ -69,9 +69,7 @@ async function Event({ params }: Pick<PageProps<"/events/[id]">, "params">) {
         </h2>
         {event.plans.length === 0 ? (
           <EmptyState icon={ListMusic} title="No plans to show">
-            {options.length ? (
-              "Add a plan below."
-            ) : (
+            {options.length ? "Add a plan below." : (
               <>
                 <Link href="/plans" className="underline underline-offset-4">
                   Create a plan
@@ -85,7 +83,7 @@ async function Event({ params }: Pick<PageProps<"/events/[id]">, "params">) {
             {event.plans.map((p) => (
               <li key={p.id} className="relative flex items-center justify-between gap-2 p-4 hover:bg-accent/50">
                 <div className="min-w-0">
-                  <Link href={`/plans/${p.id}`} className="font-medium after:absolute after:inset-0">
+                  <Link href={`/plan?id=${p.id}`} className="font-medium after:absolute after:inset-0">
                     {p.title}
                   </Link>
                   <p className="text-sm text-muted-foreground">
@@ -94,7 +92,9 @@ async function Event({ params }: Pick<PageProps<"/events/[id]">, "params">) {
                 </div>
                 <div className="flex items-center gap-2">
                   {p.status !== "draft" ? <PlanStatusBadge status={p.status} /> : null}
-                  <DetachButton eventId={event.id} planId={p.id} label={`Remove ${p.title} from this event`} />
+                  {online ? (
+                    <DetachButton eventId={event.id} planId={p.id} label={`Remove ${p.title} from this event`} />
+                  ) : null}
                 </div>
               </li>
             ))}
@@ -102,7 +102,9 @@ async function Event({ params }: Pick<PageProps<"/events/[id]">, "params">) {
         )}
         {options.length ? (
           <div className="max-w-xl">
-            <AttachForm pick="plan" fixedId={event.id} options={options} />
+            <OnlineOnly label="Adding plans needs a connection">
+              <AttachForm pick="plan" fixedId={event.id} options={options} />
+            </OnlineOnly>
           </div>
         ) : null}
         <p className="text-sm text-muted-foreground">Removing a plan from an event keeps the plan.</p>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useFormStatus } from "react-dom";
 import { Loader2, Plus, Trash2, X } from "lucide-react";
 import { FormMessage } from "@/components/auth/form-parts";
@@ -8,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { initialFormState } from "@/features/auth/form-state";
 import { attachPlanToEvent, deleteEvent, detachPlanFromEvent } from "@/features/events/actions";
+import { requestSync } from "@/features/sync/engine";
 
 const selectClass =
   "h-11 w-full min-w-0 rounded-md border border-input bg-background px-2 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50";
@@ -23,9 +25,15 @@ function Pending({ idle, busy, icon }: { idle: string; busy: string; icon: React
 }
 
 export function DeleteEventButton({ eventId, title }: { eventId: string; title: string }) {
+  const router = useRouter();
   return (
     <form
-      action={deleteEvent}
+      action={async (formData) => {
+        if (await deleteEvent(formData)) {
+          await requestSync();
+          router.push("/events");
+        }
+      }}
       onSubmit={(e) => {
         if (!window.confirm(`Delete "${title}"? Its plans are kept; they're only removed from this event.`)) {
           e.preventDefault();
@@ -43,7 +51,12 @@ export function DeleteEventButton({ eventId, title }: { eventId: string; title: 
 /** Removes a plan from an event. Neither record is deleted. */
 export function DetachButton({ eventId, planId, label }: { eventId: string; planId: string; label: string }) {
   return (
-    <form action={detachPlanFromEvent}>
+    <form
+      action={async (formData) => {
+        await detachPlanFromEvent(formData);
+        await requestSync();
+      }}
+    >
       <input type="hidden" name="eventId" value={eventId} />
       <input type="hidden" name="planId" value={planId} />
       <DetachSubmit label={label} />
@@ -77,6 +90,9 @@ export function AttachForm({
 }) {
   const [state, action] = useActionState(attachPlanToEvent, initialFormState);
   const fieldId = `attach-${pick}`;
+  useEffect(() => {
+    if (state.status === "success") void requestSync();
+  }, [state]);
   return (
     <form action={action} className="grid gap-2">
       <input type="hidden" name={pick === "plan" ? "eventId" : "planId"} value={fixedId} />

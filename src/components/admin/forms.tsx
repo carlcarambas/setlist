@@ -7,10 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { initialFormState } from "@/features/auth/form-state";
 import { inviteMember, setMemberStatus, updateOwnProfile } from "@/features/members/actions";
+import { requestSync } from "@/features/sync/engine";
 import { updateAppSettings } from "@/features/settings/actions";
 
 export function ProfileForm({ displayName, optional = false }: { displayName: string; optional?: boolean }) {
   const [state, action] = useActionState(updateOwnProfile, initialFormState);
+  useEffect(() => {
+    if (state.status === "success") void requestSync();
+  }, [state]);
   return (
     <form action={action} className="grid max-w-md gap-4" noValidate>
       <FormMessage state={state} />

@@ -2,16 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, CloudCheck, CloudDownload, Loader2, X } from "lucide-react";
-import { preloadPdfViewer, SheetViewer } from "@/components/music/sheet-viewer";
+import { SheetViewer } from "@/components/music/sheet-viewer";
 import { Button } from "@/components/ui/button";
-import {
-  loadSheet,
-  rememberSavedPlan,
-  saveAppAssetsForOffline,
-  savePageForOffline,
-  saveSheetsForOffline,
-} from "@/features/offline/sheets";
-import type { PlanItemView } from "@/features/plans/queries";
+import type { PlanItemView } from "@/features/local-db/queries";
+import { loadSheet, saveSheetsForOffline } from "@/features/offline/sheets";
 
 type OfflineState =
   | { kind: "saving"; saved: number; total: number }
@@ -21,41 +15,23 @@ type OfflineState =
 
 /**
  * The plan as members use it during a service: the ordered song list, each sheet one
- * tap away in a full-screen viewer with previous/next. Opening the plan saves its
- * sheets for offline use (spec §19 P9).
- *
- * Public share links pass `sheetBasePath` (e.g. /share/<token>/sheets): sheets then load
- * from there and nothing is saved on the device.
+ * tap away in a full-screen viewer with previous/next. Opening the plan online saves its
+ * sheets on the device for offline use (spec v2 §4.5).
  */
-export function PlanSongs({
-  planId,
-  planTitle,
-  items,
-  sheetBasePath,
-}: {
-  planId: string;
-  planTitle: string;
-  items: PlanItemView[];
-  sheetBasePath?: string;
-}) {
+export function PlanSongs({ items }: { items: PlanItemView[] }) {
   const playable = items.filter((i) => i.arrangementId);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [offline, setOffline] = useState<OfflineState>({ kind: "idle" });
 
   useEffect(() => {
-    if (sheetBasePath || !("caches" in window) || !playable.length || !navigator.onLine) return;
+    if (!("caches" in window) || !playable.length || !navigator.onLine) return;
     let cancelled = false;
     saveSheetsForOffline(
       playable.map((i) => ({ arrangementId: i.arrangementId, version: i.fileVersion })),
       (saved, total) => !cancelled && setOffline({ kind: "saving", saved, total }),
-    ).then(async ({ saved, failed, total }) => {
+    ).then(({ saved, failed, total }) => {
       if (cancelled) return;
       setOffline(failed ? { kind: "partial", saved, total } : { kind: "saved", total });
-      if (!failed) rememberSavedPlan({ id: planId, title: planTitle, savedAt: new Date().toISOString(), songs: items.length });
-      // Load the viewer code and PDF worker now, so the service worker keeps them for offline use.
-      await preloadPdfViewer().catch(() => undefined);
-      await saveAppAssetsForOffline();
-      await savePageForOffline();
     });
     return () => {
       cancelled = true;
@@ -110,7 +86,6 @@ export function PlanSongs({
           index={openIndex}
           onIndexChange={setOpenIndex}
           onClose={() => setOpenIndex(null)}
-          sheetBasePath={sheetBasePath}
         />
       ) : null}
     </>
@@ -151,13 +126,11 @@ function SheetDialog({
   index,
   onIndexChange,
   onClose,
-  sheetBasePath,
 }: {
   items: PlanItemView[];
   index: number;
   onIndexChange: (index: number) => void;
   onClose: () => void;
-  sheetBasePath?: string;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const item = items[index];
@@ -170,19 +143,13 @@ function SheetDialog({
 
   useEffect(() => {
     let cancelled = false;
-    const load = sheetBasePath
-      ? fetch(`${sheetBasePath}/${item.arrangementId}`).then((r) => {
-          if (!r.ok) throw new Error(`Sheet unavailable (${r.status})`);
-          return r.blob();
-        })
-      : loadSheet(item.arrangementId, item.fileVersion);
-    load
+    loadSheet(item.arrangementId, item.fileVersion)
       .then((file) => !cancelled && setSheet({ id: item.id, file }))
       .catch(() => !cancelled && setSheet({ id: item.id, error: true }));
     return () => {
       cancelled = true;
     };
-  }, [item.id, item.arrangementId, item.fileVersion, sheetBasePath]);
+  }, [item.id, item.arrangementId, item.fileVersion]);
 
   const go = useCallback(
     (delta: number) => {
@@ -240,9 +207,7 @@ function SheetDialog({
               </p>
             ) : "error" in current ? (
               <p role="alert" className="flex min-h-48 items-center justify-center text-center text-sm">
-                {sheetBasePath
-                  ? "This sheet couldn't be loaded. The link may have expired or been revoked."
-                  : "This sheet isn't available offline yet. Open it once while connected."}
+                This sheet isn&apos;t available offline yet. Open it once while connected.
               </p>
             ) : (
               <SheetViewer key={item.id} file={current.file} title={`${item.songTitle} — ${item.arrangementTitle}`} />

@@ -1,13 +1,14 @@
+"use client";
+
 import Link from "next/link";
 import { LogIn } from "lucide-react";
 import { SignOutButton } from "@/components/offline/sign-out-button";
-import { isAdmin, type Member } from "@/lib/auth/member";
 
-export function MemberMenu({ member }: { member: Member }) {
-  if (!isAdmin(member)) {
+export function MemberMenu({ name, email, isAdmin }: { name: string | null; email: string | null; isAdmin: boolean }) {
+  if (!isAdmin) {
     return (
       <div className="border-t px-3 py-3">
-        <p className="truncate px-3 text-sm font-medium">{member.display_name ?? "This device"}</p>
+        <p className="truncate px-3 text-sm font-medium">{name ?? "This device"}</p>
         <p className="px-3 text-xs text-muted-foreground">Member · no sign-in needed</p>
         <Link
           href="/sign-in"
@@ -21,8 +22,8 @@ export function MemberMenu({ member }: { member: Member }) {
   }
   return (
     <div className="border-t px-3 py-3">
-      <p className="truncate px-3 text-sm font-medium">{member.display_name}</p>
-      <p className="truncate px-3 text-xs text-muted-foreground">{member.email}</p>
+      <p className="truncate px-3 text-sm font-medium">{name}</p>
+      <p className="truncate px-3 text-xs text-muted-foreground">{email}</p>
       <SignOutButton className="mt-2 w-full justify-start px-3" />
     </div>
   );

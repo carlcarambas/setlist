@@ -1,29 +1,9 @@
 import { Suspense } from "react";
+import { SessionWatcher, SidebarMember } from "@/components/layout/app-frame";
 import { Brand } from "@/components/layout/brand";
-import { MemberMenu } from "@/components/layout/member-menu";
-import { OfflineBanner } from "@/components/offline/offline-banner";
 import { MobileTabBar, MobileTabBarLinks } from "@/components/layout/mobile-tab-bar";
-import { SidebarNav, SidebarNavLinks } from "@/components/layout/sidebar-nav";
-import { isAdmin, requireActiveMember } from "@/lib/auth/member";
-
-// Only active sessions (member devices and administrators) get past these components; RLS enforces
-// the same rule on the data.
-async function ActiveMemberContent({ children }: { children: React.ReactNode }) {
-  await requireActiveMember();
-  return children;
-}
-
-async function MemberSidebar() {
-  const member = await requireActiveMember();
-  return (
-    <>
-      <SidebarNav isAdmin={isAdmin(member)} />
-      <div className="mt-auto">
-        <MemberMenu member={member} />
-      </div>
-    </>
-  );
-}
+import { SidebarNavLinks } from "@/components/layout/sidebar-nav";
+import { SyncStatusBar } from "@/components/layout/sync-status";
 
 function ContentSkeleton() {
   return (
@@ -34,6 +14,12 @@ function ContentSkeleton() {
   );
 }
 
+/**
+ * Static app frame: nothing here reads the session on the server, so member pages are prerendered,
+ * identical for everyone, and cached by the service worker for offline use (spec v2 §4.5, §7.4).
+ * Who-is-this-device details come from the local database. The proxy sends visitors without a
+ * session to /welcome, server-rendered admin pages check the role themselves, and RLS guards data.
+ */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[15rem_1fr]">
@@ -49,7 +35,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <Brand />
         </div>
         <Suspense fallback={<SidebarNavLinks isAdmin={false} />}>
-          <MemberSidebar />
+          <SidebarMember />
         </Suspense>
       </aside>
 
@@ -60,16 +46,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <OfflineBanner />
+        <SyncStatusBar />
         <main id="main" className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-24 md:px-8 md:pb-10">
-          <Suspense fallback={<ContentSkeleton />}>
-            <ActiveMemberContent>{children}</ActiveMemberContent>
-          </Suspense>
+          <Suspense fallback={<ContentSkeleton />}>{children}</Suspense>
         </main>
       </div>
 
       <Suspense fallback={<MobileTabBarLinks />}>
         <MobileTabBar />
+      </Suspense>
+      <Suspense>
+        <SessionWatcher />
       </Suspense>
     </div>
   );

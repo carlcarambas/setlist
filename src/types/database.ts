@@ -69,6 +69,20 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"deleted_rows": {
+                  Row: {
+                    "deleted_at": string,"id": number,"row_id": string,"table_name": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "deleted_at"?: string,"id"?: never,"row_id": string,"table_name": string
+                  }
+                  Update: {
+                    "deleted_at"?: string,"id"?: never,"row_id"?: string,"table_name"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"event_plans": {
                   Row: {
                     "created_at": string,"event_id": string,"id": string,"plan_id": string,"position": number
@@ -293,6 +307,9 @@ isOneToOne: false
                            },
 "music_categories":
 { Args: Record<PropertyKey, never>; Returns: string[]
+                           },
+"pull_changes":
+{ Args: { "p_since"?: string }; Returns: Json
                            },
 "remove_plan_item":
 { Args: { "p_item_id": string }; Returns: number

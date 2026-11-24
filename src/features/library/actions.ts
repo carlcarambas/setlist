@@ -326,7 +326,7 @@ export async function updatePiece(_prev: FormState, formData: FormData): Promise
     .select("id");
   if (error || !data?.length) return formError("Changes couldn't be saved. Please try again.", keptValues(formData));
 
-  redirect(`/library/${id.data}`);
+  redirect(`/song?id=${id.data}`);
 }
 
 export async function updateArrangement(_prev: FormState, formData: FormData): Promise<FormState> {

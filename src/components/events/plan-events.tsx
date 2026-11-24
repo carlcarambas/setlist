@@ -24,7 +24,7 @@ export async function PlanEvents({ planId, editable }: { planId: string; editabl
           {events.map((e) => (
             <li key={e.id} className="flex items-center rounded-full border pl-3 text-sm">
               <CalendarDays className="mr-1.5 size-4 text-muted-foreground" aria-hidden />
-              <Link href={`/events/${e.id}`} className="min-h-11 content-center pr-3 underline-offset-4 hover:underline">
+              <Link href={`/event?id=${e.id}`} className="min-h-11 content-center pr-3 underline-offset-4 hover:underline">
                 {e.title} · {formatEventDate(e.eventDate)}
               </Link>
               {editable ? (

@@ -69,19 +69,6 @@ export async function getEvent(id: string, member: Member) {
   };
 }
 
-/** Plans that can be attached to an event: every plan that isn't archived (spec v2 §4.3). */
-export async function listAttachablePlans() {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("plans")
-    .select("id, title")
-    .neq("status", "archived")
-    .order("updated_at", { ascending: false })
-    .limit(200);
-  if (error) return [];
-  return data;
-}
-
 /** Events a plan belongs to, soonest first. */
 export async function listPlanEvents(planId: string) {
   const supabase = await createClient();

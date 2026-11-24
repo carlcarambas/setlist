@@ -24,8 +24,8 @@ Storage) · Railway.
 | 4 | Sharing: members as viewer/editor, Shared with Me, view-only links with expiry | Done (not deployed; removed by spec v2) |
 | 5 | Events (upcoming/past in the church timezone, attach plans) and the dashboard | Done (not deployed) |
 | 6 | Access model: no member login (anonymous devices + bot check), admin-only library, sharing removed | Done (not deployed) |
-| 7 | Local data and offline app shell | Next |
-| 8 | Offline sheets | Planned |
+| 7 | Local data and offline app shell: pages read from the device, background sync, precached app | Done (not deployed) |
+| 8 | Offline sheets | Next |
 | 9 | Offline editing and sync | Planned |
 | 10 | Hardening and launch | Planned |
 
@@ -77,7 +77,12 @@ Mailpit at http://127.0.0.1:54324.
 
 ## Testing offline mode locally
 
-The service worker only runs in a production build (in development it would serve stale code).
+How it works: member pages (Home, Library, a song, a sheet, Plans, a plan, Events, an event, Settings) are
+static and read from a database on the device (IndexedDB), which syncs with Supabase in the background.
+`npm run build` also generates `public/sw.js` (from `scripts/sw-template.js`) with the build's file list, so
+the service worker can cache the whole app. Each build is a new version; a device switches to it the next
+time Setlist is opened after being fully closed. The service worker only runs in a production build (in
+development it would serve stale code).
 
 1. Build:
 
@@ -91,9 +96,11 @@ The service worker only runs in a production build (in development it would serv
    npm start
    ```
 
-3. Sign in, open a plan once, and wait for "Available offline on this device".
-4. Stop the server (or turn on airplane mode). Reload the plan: it still opens, and its sheets open from
-   the device. Other pages show the offline page with the list of saved plans.
+3. Open the app once (it syncs everything except PDFs). Open a plan to save its sheets on the device
+   ("Available offline on this device").
+4. Stop the server and the local Supabase (`npm run db:stop`), or turn on airplane mode. Every plan, song
+   and event still opens, including ones never opened before; sheets opened earlier still show. Editing
+   and admin pages say they need a connection.
 
 To start over, unregister the service worker and clear site data in the browser's developer tools.
 

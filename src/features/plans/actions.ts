@@ -6,7 +6,7 @@ import { z } from "zod";
 import { formError, keptValues, validationError, type FormState } from "@/features/auth/form-state";
 import { getCurrentMember, isAdmin } from "@/lib/auth/member";
 import { createClient } from "@/lib/supabase/server";
-import { findArrangementsForPlan } from "./queries";
+import { findArrangementsForPlan, getPlanActivity } from "./queries";
 import {
   itemNotesSchema,
   newPlanSchema,
@@ -133,13 +133,20 @@ export async function duplicatePlan(formData: FormData): Promise<void> {
 }
 
 /** Permanent delete: administrators only (spec v2 D4). The database function re-checks. */
-export async function deletePlan(formData: FormData): Promise<void> {
-  if (!isAdmin(await getCurrentMember())) return;
+export async function deletePlan(formData: FormData): Promise<boolean> {
+  if (!isAdmin(await getCurrentMember())) return false;
   const planId = z.uuid().safeParse(formData.get("planId"));
-  if (!planId.success) return;
+  if (!planId.success) return false;
   const supabase = await createClient();
   const { error } = await supabase.rpc("delete_plan", { p_plan_id: planId.data });
-  if (!error) redirect("/plans");
+  return !error;
+}
+
+/** Recent history of a plan; shown only while online (activity isn't synced to devices). */
+export async function fetchPlanActivity(planId: string) {
+  if (!(await signedIn())) return [];
+  const id = z.uuid().safeParse(planId);
+  return id.success ? getPlanActivity(id.data) : [];
 }
 
 export async function searchSongsForPlan(query: string) {

@@ -27,7 +27,7 @@ export async function createEvent(_prev: FormState, formData: FormData): Promise
   const supabase = await createClient();
   const { data, error } = await supabase.from("events").insert(eventRow(parsed.data)).select("id").single();
   if (error || !data) return formError("The event couldn't be created. Please try again.", keptValues(formData));
-  redirect(`/events/${data.id}`);
+  redirect(`/event?id=${data.id}`);
 }
 
 export async function updateEvent(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -45,18 +45,18 @@ export async function updateEvent(_prev: FormState, formData: FormData): Promise
     .select("id");
   if (error) return formError("The event couldn't be saved. Please try again.", keptValues(formData));
   if (!data.length) return formError("This event no longer exists.", keptValues(formData));
-  redirect(`/events/${eventId.data}`);
+  redirect(`/event?id=${eventId.data}`);
 }
 
 /** Administrators only (spec v2 §4.4); RLS refuses everyone else too. */
-export async function deleteEvent(formData: FormData) {
-  if (!isAdmin(await activeMember())) redirect("/sign-in");
+export async function deleteEvent(formData: FormData): Promise<boolean> {
+  if (!isAdmin(await activeMember())) return false;
   const eventId = z.uuid().safeParse(formData.get("eventId"));
-  if (!eventId.success) redirect("/events");
+  if (!eventId.success) return false;
   const supabase = await createClient();
   // Associations cascade; the plans themselves are untouched.
-  await supabase.from("events").delete().eq("id", eventId.data);
-  redirect("/events");
+  const { error } = await supabase.from("events").delete().eq("id", eventId.data);
+  return !error;
 }
 
 export async function attachPlanToEvent(_prev: FormState, formData: FormData): Promise<FormState> {

@@ -273,7 +273,7 @@ export function PlanEditor({
             <option value="published">Published</option>
           </select>
           <Button asChild variant="outline" className="h-11 gap-2">
-            <Link href={`/plans/${plan.id}`}>
+            <Link href={`/plan?id=${plan.id}`}>
               <Eye className="size-4" aria-hidden />
               Done
             </Link>
@@ -467,7 +467,7 @@ function SortableSong({
       </div>
       <div className="flex shrink-0 flex-col gap-1 sm:flex-row">
         <Button asChild variant="ghost" className="size-11" aria-label={`Preview ${item.songTitle}`}>
-          <Link href={`/sheets/${item.arrangementId}`} target="_blank">
+          <Link href={`/sheet?id=${item.arrangementId}`} target="_blank">
             <Eye className="size-4" aria-hidden />
           </Link>
         </Button>

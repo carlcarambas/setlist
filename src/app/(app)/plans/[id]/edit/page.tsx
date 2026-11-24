@@ -26,13 +26,13 @@ async function Editor({ params }: Pick<PageProps<"/plans/[id]/edit">, "params">)
   if (!id.success) notFound();
   const plan = await getPlan(id.data);
   if (!plan) notFound();
-  if (!plan.canEdit || plan.status === "archived") redirect(`/plans/${plan.id}`);
+  if (!plan.canEdit || plan.status === "archived") redirect(`/plan?id=${plan.id}`);
 
   return (
     <>
       <div className="mb-2 flex items-center justify-between gap-2">
         <Link
-          href={`/plans/${plan.id}`}
+          href={`/plan?id=${plan.id}`}
           className="inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="size-4" aria-hidden />
