@@ -17,7 +17,7 @@ export function ErrorView({ error, retry }: { error: unknown; retry: () => void 
   return (
     <div role="alert" className="mx-auto flex max-w-md flex-col items-center gap-4 py-16 text-center">
       <TriangleAlert className="size-8 text-muted-foreground" aria-hidden />
-      <h1 className="text-xl font-semibold">Something went wrong</h1>
+      <h1 className="text-2xl font-semibold">Something went wrong</h1>
       <p className="text-sm text-muted-foreground">
         This page couldn&apos;t load. Try again; if it keeps happening, tell an administrator
         {digest ? (

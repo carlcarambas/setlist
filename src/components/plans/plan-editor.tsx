@@ -39,6 +39,7 @@ import type { PlanItemView } from "@/features/plans/queries";
 import { PLAN_EDIT_MESSAGES, type PlanEditError } from "@/features/plans/schemas";
 import { cn } from "@/lib/utils";
 import { LibraryPanel, type SongResult } from "./library-panel";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 
 type SaveState =
   | { kind: "idle" | "saving" | "saved" }
@@ -262,16 +263,13 @@ export function PlanEditor({
           <label htmlFor="plan-status" className="sr-only">
             Status
           </label>
-          <select
-            id="plan-status"
-            value={status}
-            disabled={locked}
-            onChange={(e) => onStatusChange(e.target.value as "draft" | "published")}
-            className="h-11 rounded-md border bg-background px-3 text-sm"
-          >
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-          </select>
+          <Select value={status} disabled={locked} onValueChange={(v) => onStatusChange(v as "draft" | "published")}>
+            <SelectTrigger id="plan-status" className="min-w-40" />
+            <SelectContent>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="published">Published</SelectItem>
+            </SelectContent>
+          </Select>
           <Button asChild variant="outline" className="h-11 gap-2">
             <Link href={`/plan?id=${plan.id}`}>
               <Eye className="size-4" aria-hidden />
@@ -282,7 +280,7 @@ export function PlanEditor({
       </div>
 
       {!online ? (
-        <p role="status" className="flex items-center gap-2 rounded-md border p-3 text-sm">
+        <p role="status" className="flex items-center gap-2 rounded-lg border bg-surface-soft p-3 text-sm">
           <WifiOff className="size-4 shrink-0" aria-hidden />
           You&apos;re offline. Editing is paused until you reconnect; nothing you typed is lost.
         </p>
@@ -320,7 +318,7 @@ export function PlanEditor({
       </fieldset>
 
       {/* Mobile: switch between the setlist and the library. Desktop shows both. */}
-      <div role="tablist" aria-label="Editor panels" className="grid grid-cols-2 rounded-md border p-1 lg:hidden">
+      <div role="tablist" aria-label="Editor panels" className="grid grid-cols-2 rounded-full border border-input p-1 lg:hidden">
         {(["setlist", "library"] as const).map((t) => (
           <button
             key={t}
@@ -329,7 +327,7 @@ export function PlanEditor({
             aria-selected={tab === t}
             aria-controls={`panel-${t}`}
             onClick={() => setTab(t)}
-            className={cn("h-11 rounded text-sm font-medium", tab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground")}
+            className={cn("h-11 rounded-full text-sm font-medium", tab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground")}
           >
             {t === "setlist" ? `Setlist (${items.length})` : "Add songs"}
           </button>
@@ -342,11 +340,11 @@ export function PlanEditor({
           aria-labelledby="setlist-heading"
           className={cn(tab !== "setlist" && "hidden lg:block")}
         >
-          <h2 id="setlist-heading" className="mb-3 font-semibold">
+          <h2 id="setlist-heading" className="mb-3 text-xl font-medium">
             Setlist ({items.length})
           </h2>
           {items.length === 0 ? (
-            <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+            <p className="rounded-lg border p-6 text-center text-sm text-muted-foreground">
               No songs yet. Search the library{" "}
               <button type="button" className="underline underline-offset-4 lg:hidden" onClick={() => setTab("library")}>
                 on the Add songs tab
@@ -390,7 +388,7 @@ export function PlanEditor({
           aria-labelledby="library-heading"
           className={cn("lg:sticky lg:top-4 lg:self-start", tab !== "library" && "hidden lg:block")}
         >
-          <h2 id="library-heading" className="mb-3 font-semibold">
+          <h2 id="library-heading" className="mb-3 text-xl font-medium">
             Add songs
           </h2>
           <LibraryPanel disabled={locked} onAdd={addSong} />
@@ -424,14 +422,14 @@ function SortableSong({
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
         "flex items-start gap-2 rounded-lg border bg-background p-2 sm:p-3",
-        isDragging && "relative z-10 shadow-lg",
+        isDragging && "relative z-10 border-primary",
         item.pending && "opacity-60",
       )}
     >
       <button
         ref={setActivatorNodeRef}
         type="button"
-        className="flex size-11 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground hover:bg-accent disabled:cursor-not-allowed"
+        className="flex size-11 shrink-0 cursor-grab touch-none items-center justify-center rounded-full text-muted-foreground hover:bg-accent disabled:cursor-not-allowed"
         aria-label={`Reorder ${item.songTitle}, position ${index + 1}`}
         disabled={disabled || item.pending}
         {...attributes}
@@ -462,7 +460,7 @@ function SortableSong({
           placeholder="Notes, e.g. intro twice, skip verse 3"
           disabled={disabled || item.pending}
           onChange={(e) => onNotesChange(e.target.value)}
-          className="h-10 text-sm"
+          className="text-sm"
         />
       </div>
       <div className="flex shrink-0 flex-col gap-1 sm:flex-row">
@@ -499,7 +497,7 @@ function SaveIndicator({ save, online }: { save: SaveState; online: boolean }) {
           <span className="flex flex-wrap items-center gap-2 text-destructive">
             <AlertCircle className="size-4" aria-hidden />
             Save failed. {PLAN_EDIT_MESSAGES[save.error]}
-            <Button type="button" variant="outline" className="h-9" onClick={save.retry}>
+            <Button type="button" variant="outline" className="h-11" onClick={save.retry}>
               Retry
             </Button>
           </span>
@@ -509,7 +507,7 @@ function SaveIndicator({ save, online }: { save: SaveState; online: boolean }) {
           <span className="flex flex-wrap items-center gap-2 text-destructive">
             <AlertCircle className="size-4" aria-hidden />
             {PLAN_EDIT_MESSAGES.conflict}
-            <Button type="button" variant="outline" className="h-9 gap-2" onClick={() => window.location.reload()}>
+            <Button type="button" variant="outline" className="h-11 gap-2" onClick={() => window.location.reload()}>
               <RefreshCw className="size-4" aria-hidden />
               Reload
             </Button>

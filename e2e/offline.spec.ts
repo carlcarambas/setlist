@@ -38,7 +38,10 @@ test("a kept plan and its sheets work offline; changes need a connection", async
     await page.getByRole("button", { name: new RegExp(`^Open sheet: ${song}`) }).click();
     const dialog = page.getByRole("dialog");
     await expect(dialog.locator("canvas").first()).toBeVisible({ timeout: 15_000 });
-    await page.getByRole("button", { name: "Close sheet" }).click();
+    // Back closes the sheet and stays on the plan, with no connection.
+    await page.goBack();
+    await expect(dialog).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: state.planTitle })).toBeVisible();
   }
 
   // Other pages open from the device, including ones never visited.

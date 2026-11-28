@@ -29,7 +29,7 @@ async function Editor({ params }: Pick<PageProps<"/plans/[id]/edit">, "params">)
   if (!plan.canEdit || plan.status === "archived") redirect(`/plan?id=${plan.id}`);
 
   return (
-    <>
+    <div data-wide>
       <div className="mb-2 flex items-center justify-between gap-2">
         <Link
           href={`/plan?id=${plan.id}`}
@@ -46,6 +46,6 @@ async function Editor({ params }: Pick<PageProps<"/plans/[id]/edit">, "params">)
         plan={{ id: plan.id, title: plan.title, description: plan.description, version: plan.version, status: plan.status }}
         initialItems={plan.items}
       />
-    </>
+    </div>
   );
 }

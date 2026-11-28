@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { InviteMemberForm, MemberStatusForm } from "@/components/admin/forms";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionSkeleton } from "@/components/layout/section-skeleton";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SettingsSection } from "@/components/layout/settings-section";
 import { listAdministrators, listMemberDevices } from "@/features/members/queries";
 import { requireAdmin } from "@/lib/auth/member";
 
@@ -28,26 +28,21 @@ async function AdministratorsContent() {
 
   return (
     <>
-      <div className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              <h2>Invite an administrator</h2>
-            </CardTitle>
-            <CardDescription>They&apos;ll get an email with a link to set their password. Administrators can upload and change music, delete plans and events, and manage settings.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <InviteMemberForm />
-          </CardContent>
-        </Card>
+      <div className="grid gap-12 md:gap-16">
+        <SettingsSection
+          title="Invite an administrator"
+          description="They'll get an email with a link to set their password. Administrators can upload and change music, delete plans and events, and manage settings."
+        >
+          <InviteMemberForm />
+        </SettingsSection>
 
         <section aria-labelledby="members-heading">
-          <h2 id="members-heading" className="mb-3 font-semibold">
+          <h2 id="members-heading" className="mb-3 text-xl font-medium">
             All administrators ({members.length})
           </h2>
-          <ul className="divide-y rounded-lg border">
+          <ul className="-mx-3 divide-y border-y">
             {members.map((m) => (
-              <li key={m.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <li key={m.id} className="flex flex-col gap-3 px-3 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                   <p className="truncate font-medium">
                     {m.display_name ?? m.email}
@@ -71,7 +66,7 @@ async function AdministratorsContent() {
         </section>
 
         <section aria-labelledby="devices-heading">
-          <h2 id="devices-heading" className="font-semibold">
+          <h2 id="devices-heading" className="text-xl font-medium">
             Member devices ({devices.length})
           </h2>
           <p className="mb-3 text-sm text-muted-foreground">
@@ -79,13 +74,13 @@ async function AdministratorsContent() {
             in each plan&apos;s history, and archived plans can be restored.
           </p>
           {devices.length === 0 ? (
-            <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+            <p className="rounded-lg border p-6 text-center text-sm text-muted-foreground">
               No member device has changed a plan yet.
             </p>
           ) : (
-            <ul className="divide-y rounded-lg border">
+            <ul className="-mx-3 divide-y border-y">
               {devices.map((d) => (
-                <li key={d.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <li key={d.id} className="flex flex-col gap-3 px-3 py-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
                     <p className="truncate font-medium">{d.display_name ?? "Unnamed device"}</p>
                     <p className="text-sm text-muted-foreground">

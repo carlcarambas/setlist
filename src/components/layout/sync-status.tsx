@@ -46,7 +46,7 @@ export function SyncStatusBar() {
 
 function Bar({ children }: { children: React.ReactNode }) {
   return (
-    <div role="status" className="flex items-center gap-2 border-b bg-muted px-4 py-2 text-sm">
+    <div role="status" className="flex items-center gap-2 border-b bg-surface-soft px-4 py-2 text-sm">
       {children}
     </div>
   );

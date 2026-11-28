@@ -55,7 +55,7 @@ export function InstallHint() {
 
   if (!kind) return null;
   return (
-    <aside aria-label="Install Setlist" className="mb-6 flex items-start gap-3 rounded-lg border bg-muted/40 p-4 text-sm">
+    <aside aria-label="Install Setlist" className="mb-6 flex items-start gap-3 rounded-[0.75rem] border bg-surface-soft p-4 text-sm">
       <div className="flex-1 space-y-2">
         {kind === "ios" ? (
           <>

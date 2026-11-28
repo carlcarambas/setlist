@@ -68,9 +68,9 @@ export function LibraryView() {
           <p className="mb-2 text-sm text-muted-foreground" aria-live="polite">
             {result.total} {result.total === 1 ? "song" : "songs"}
           </p>
-          <ul className="divide-y rounded-lg border">
+          <ul className="-mx-3 divide-y border-y">
             {result.pieces.map((p) => (
-              <li key={p.id} className="relative flex flex-col gap-1 p-4 hover:bg-accent/50">
+              <li key={p.id} className="relative flex flex-col gap-1 px-3 py-4 hover:bg-surface-soft">
                 <Link href={`/song?id=${p.id}`} className="font-medium after:absolute after:inset-0">
                   {p.title}
                 </Link>
@@ -86,7 +86,7 @@ export function LibraryView() {
                       <Link
                         key={tag}
                         href={searchHref(search, { tag, page: 1 })}
-                        className="rounded-full bg-muted px-2 py-0.5 hover:underline"
+                        className="rounded-full bg-muted px-3 py-1 hover:underline"
                       >
                         #{tag}
                       </Link>

@@ -9,7 +9,6 @@ import { LocalSkeleton, OnlineOnly } from "@/components/local/states";
 import { OfflineBadge } from "@/components/offline/offline-badge";
 import { NewPlanForm } from "@/components/plans/new-plan-form";
 import { PlanStatusBadge, relativeTime } from "@/components/plans/plan-status";
-import { Card, CardContent } from "@/components/ui/card";
 import { localDb } from "@/features/local-db/db";
 import { listPlans } from "@/features/local-db/queries";
 import { useLiveQuery } from "@/features/local-db/use-live-query";
@@ -21,16 +20,14 @@ export function PlansView() {
   return (
     <>
       <PageHeader title="Plans" description="Every setlist in the ministry. Anyone can edit them." />
-      <Card className="mb-6">
-        <CardContent>
-          <OnlineOnly label="Creating a plan needs a connection">
-            <NewPlanForm />
-          </OnlineOnly>
-        </CardContent>
-      </Card>
+      <div className="mb-12">
+        <OnlineOnly label="Creating a plan needs a connection">
+          <NewPlanForm />
+        </OnlineOnly>
+      </div>
       <section aria-labelledby="plans-heading">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 id="plans-heading" className="font-semibold">
+          <h2 id="plans-heading" className="text-xl font-medium">
             {includeArchived ? "All plans" : "Current plans"}
             {plans ? ` (${plans.length})` : null}
           </h2>
@@ -48,9 +45,9 @@ export function PlansView() {
             Create a plan above, then add songs from the library.
           </EmptyState>
         ) : (
-          <ul className="divide-y rounded-lg border">
+          <ul className="-mx-3 divide-y border-y">
             {plans.map((p) => (
-              <li key={p.id} className="relative flex flex-wrap items-center justify-between gap-2 p-4 hover:bg-accent/50">
+              <li key={p.id} className="relative flex flex-wrap items-center justify-between gap-2 px-3 py-4 hover:bg-surface-soft">
                 <div className="min-w-0">
                   <Link href={`/plan?id=${p.id}`} className="font-medium after:absolute after:inset-0">
                     {p.title}

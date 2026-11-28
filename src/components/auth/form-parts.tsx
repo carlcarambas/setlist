@@ -48,10 +48,18 @@ export function Field({
   );
 }
 
-export function SubmitButton({ children, pendingText }: { children: string; pendingText: string }) {
+export function SubmitButton({
+  children,
+  pendingText,
+  variant,
+}: {
+  children: string;
+  pendingText: string;
+  variant?: "outline";
+}) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" className="h-11 w-full" disabled={pending} aria-disabled={pending}>
+    <Button type="submit" variant={variant} className="h-11 w-full" disabled={pending} aria-disabled={pending}>
       {pending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
       {pending ? pendingText : children}
     </Button>
@@ -69,8 +77,8 @@ export function FormMessage({ state }: { state: FormState }) {
       aria-live="polite"
       className={
         isError
-          ? "flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive"
-          : "flex items-start gap-2 rounded-md border bg-muted p-3 text-sm"
+          ? "flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive"
+          : "flex items-start gap-2 rounded-lg border bg-surface-soft p-3 text-sm"
       }
     >
       <Icon className="mt-0.5 size-4 shrink-0" aria-hidden />

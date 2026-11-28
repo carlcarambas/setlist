@@ -13,13 +13,26 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string | null })
       href={href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex min-h-11 items-center gap-3 rounded-md border-l-4 border-transparent px-3 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
-        active && "border-primary bg-accent font-semibold text-foreground",
+        "flex min-h-11 items-center gap-3 rounded-full px-4 text-base text-white/70 transition-colors duration-150 outline-none hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-highlight motion-reduce:transition-none",
+        // Current page: a solid fill, weight and aria-current, so it doesn't rely on hue.
+        active && "bg-highlight font-semibold text-black hover:bg-highlight hover:text-black",
       )}
     >
-      <Icon className="size-4 shrink-0" aria-hidden />
+      <Icon className="size-[1.125rem] shrink-0" aria-hidden />
       {label}
     </Link>
+  );
+}
+
+function NavGroup({ items, pathname, labelledBy }: { items: NavItem[]; pathname: string | null; labelledBy?: string }) {
+  return (
+    <ul aria-labelledby={labelledBy} className="grid gap-1">
+      {items.map((item) => (
+        <li key={item.href}>
+          <NavLink item={item} pathname={pathname} />
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -31,22 +44,18 @@ export function SidebarNav({ isAdmin }: { isAdmin: boolean }) {
 /** The same links without reading the URL, so it can be part of the static page shell. */
 export function SidebarNavLinks({ isAdmin, pathname = null }: { isAdmin: boolean; pathname?: string | null }) {
   return (
-    <nav aria-label="Main" className="flex flex-col gap-1 px-3">
-      {primaryNav.map((item) => (
-        <NavLink key={item.href} item={item} pathname={pathname} />
-      ))}
+    <nav aria-label="Main" className="flex flex-col gap-6 px-3">
+      <NavGroup items={primaryNav} pathname={pathname} />
       {isAdmin ? (
-        <>
-          <p className="mt-4 px-3 pb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        <div className="grid gap-1">
+          <p id="nav-admin" className="px-4 pb-1 text-sm text-white/55">
             Administration
           </p>
-          {adminNav.map((item) => (
-            <NavLink key={item.href} item={item} pathname={pathname} />
-          ))}
-        </>
+          <NavGroup items={adminNav} pathname={pathname} labelledBy="nav-admin" />
+        </div>
       ) : null}
-      <div className="mt-4">
-        <NavLink item={settingsNav} pathname={pathname} />
+      <div className="border-t border-white/10 pt-4">
+        <NavGroup items={[settingsNav]} pathname={pathname} />
       </div>
     </nav>
   );

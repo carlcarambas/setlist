@@ -9,6 +9,7 @@ import { initialFormState } from "@/features/auth/form-state";
 import { inviteMember, setMemberStatus, updateOwnProfile } from "@/features/members/actions";
 import { requestSync } from "@/features/sync/engine";
 import { updateAppSettings } from "@/features/settings/actions";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 
 export function ProfileForm({ displayName, optional = false }: { displayName: string; optional?: boolean }) {
   const [state, action] = useActionState(updateOwnProfile, initialFormState);
@@ -16,19 +17,24 @@ export function ProfileForm({ displayName, optional = false }: { displayName: st
     if (state.status === "success") void requestSync();
   }, [state]);
   return (
-    <form action={action} className="grid max-w-md gap-4" noValidate>
+    <form action={action} className="grid gap-3" noValidate>
       <FormMessage state={state} />
-      <Field
-        name="displayName"
-        label={optional ? "Device name (optional)" : "Your name"}
-        autoComplete={optional ? "off" : "name"}
-        maxLength={100}
-        defaultValue={state.values?.displayName ?? displayName}
-        required={!optional}
-        errors={state.fieldErrors?.displayName}
-      />
-      <div className="sm:w-40">
-        <SubmitButton pendingText="Saving…">Save</SubmitButton>
+      <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-start">
+        <Field
+          name="displayName"
+          label={optional ? "Device name (optional)" : "Your name"}
+          autoComplete={optional ? "off" : "name"}
+          maxLength={100}
+          defaultValue={state.values?.displayName ?? displayName}
+          required={!optional}
+          errors={state.fieldErrors?.displayName}
+        />
+        {/* Level with the input: the label's height plus the gap under it. */}
+        <div className="sm:w-28 sm:pt-[1.375rem]">
+          <SubmitButton pendingText="Saving…" variant="outline">
+            Save
+          </SubmitButton>
+        </div>
       </div>
     </form>
   );
@@ -139,19 +145,16 @@ export function AppSettingsForm({
       />
       <div className="grid gap-2">
         <Label htmlFor="timezone">Time zone</Label>
-        <select
-          id="timezone"
-          name="timezone"
-          defaultValue={state.values?.timezone ?? timezone}
-          aria-describedby="timezone-hint"
-          className="h-11 rounded-md border bg-background px-3 text-sm focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
-        >
-          {timezones.map((tz) => (
-            <option key={tz} value={tz}>
-              {tz.replaceAll("_", " ")}
-            </option>
-          ))}
-        </select>
+        <Select name="timezone" defaultValue={state.values?.timezone ?? timezone}>
+          <SelectTrigger id="timezone" className="w-full" aria-describedby="timezone-hint" />
+          <SelectContent>
+            {timezones.map((tz) => (
+              <SelectItem key={tz} value={tz}>
+                {tz.replaceAll("_", " ")}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <p id="timezone-hint" className="text-xs text-muted-foreground">
           Used to show event dates and decide what counts as upcoming.
         </p>

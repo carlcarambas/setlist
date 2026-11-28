@@ -41,9 +41,9 @@ export function EventView() {
         <ArrowLeft className="size-4" aria-hidden />
         Events
       </Link>
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="mb-8 flex flex-col items-start gap-4 md:mb-12">
         <div className="min-w-0 space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">{event.title}</h1>
+          <h1 className="text-[1.75rem] leading-tight font-medium md:text-3xl">{event.title}</h1>
           <p className="text-muted-foreground">
             <EventDateLine eventDate={event.event_date} startTime={event.start_time} />
             {event.isPast ? " · past" : null}
@@ -65,7 +65,7 @@ export function EventView() {
       </div>
 
       <section aria-labelledby="event-plans-heading" className="space-y-4">
-        <h2 id="event-plans-heading" className="font-semibold">
+        <h2 id="event-plans-heading" className="text-xl font-medium">
           Plans ({event.plans.length})
         </h2>
         {event.plans.length === 0 ? (
@@ -80,9 +80,9 @@ export function EventView() {
             )}
           </EmptyState>
         ) : (
-          <ul className="divide-y rounded-lg border">
+          <ul className="-mx-3 divide-y border-y">
             {event.plans.map((p) => (
-              <li key={p.id} className="relative flex items-center justify-between gap-2 p-4 hover:bg-accent/50">
+              <li key={p.id} className="relative flex items-center justify-between gap-2 px-3 py-4 hover:bg-surface-soft">
                 <div className="min-w-0">
                   <Link href={`/plan?id=${p.id}`} className="font-medium after:absolute after:inset-0">
                     {p.title}

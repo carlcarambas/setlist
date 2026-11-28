@@ -11,10 +11,10 @@ export const metadata: Metadata = { title: "Needs a connection" };
  */
 export default function OfflinePage() {
   return (
-    <div className="flex min-h-dvh flex-col items-center gap-8 bg-muted/40 px-4 py-10">
+    <div className="flex min-h-dvh flex-col items-center gap-8 px-4 py-10">
       <Brand />
-      <main className="w-full max-w-md rounded-xl border bg-background p-6">
-        <h1 className="flex items-center gap-2 text-xl font-semibold">
+      <main className="w-full max-w-md">
+        <h1 className="flex items-center gap-2 text-2xl font-semibold">
           <WifiOff className="size-5" aria-hidden />
           This page needs a connection
         </h1>
@@ -29,7 +29,7 @@ export default function OfflinePage() {
             ["/events", "Events"],
           ].map(([href, label]) => (
             <li key={href}>
-              <Link href={href} className="flex min-h-11 items-center rounded-md border px-4 hover:bg-accent">
+              <Link href={href} className="flex min-h-11 items-center rounded-full border border-input px-5 hover:bg-accent">
                 {label}
               </Link>
             </li>

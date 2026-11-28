@@ -4,18 +4,18 @@ import { AppSettingsForm } from "@/components/admin/forms";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionSkeleton } from "@/components/layout/section-skeleton";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SettingsSection } from "@/components/layout/settings-section";
 import { cleanupStaleUploads } from "@/features/library/actions";
 import { countStaleUploads } from "@/features/library/queries";
 import { getAppSettings } from "@/features/settings/queries";
 import { requireAdmin } from "@/lib/auth/member";
 
-export const metadata: Metadata = { title: "App Settings" };
+export const metadata: Metadata = { title: "App settings" };
 
 export default function AppSettingsPage() {
   return (
     <>
-      <PageHeader title="App Settings" description="Settings that apply to the whole ministry." />
+      <PageHeader title="App settings" description="Settings that apply to the whole ministry." />
       <Suspense fallback={<SectionSkeleton />}>
         <AppSettingsContent />
       </Suspense>
@@ -32,35 +32,29 @@ async function AppSettingsContent() {
   const staleUploads = await countStaleUploads();
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-12 md:gap-16">
       <AppSettingsForm
         churchName={settings.church_name}
         timezone={settings.timezone}
         timezones={timezones}
       />
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <h2>Unfinished uploads</h2>
-          </CardTitle>
-          <CardDescription>
-            Uploads that were started more than a day ago but never completed (for example, the
-            browser was closed mid-upload). Removing them frees storage space.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap items-center gap-4">
-          <p className="text-sm">
+      <SettingsSection
+        title="Unfinished uploads"
+        description="Uploads that were started more than a day ago but never completed (for example, the browser was closed mid-upload). Removing them frees storage space."
+      >
+        <div className="flex flex-wrap items-center gap-4">
+          <p>
             {staleUploads === 0 ? "Nothing to clean up." : `${staleUploads} unfinished ${staleUploads === 1 ? "upload" : "uploads"}.`}
           </p>
           {staleUploads > 0 ? (
             <form action={cleanupStaleUploads}>
-              <Button type="submit" variant="outline" className="h-11">
+              <Button type="submit" variant="outline">
                 Remove unfinished uploads
               </Button>
             </form>
           ) : null}
-        </CardContent>
-      </Card>
+        </div>
+      </SettingsSection>
     </div>
   );
 }
