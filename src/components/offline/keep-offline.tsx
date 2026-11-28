@@ -1,16 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { CloudCheck, CloudDownload, Loader2, RotateCw, Trash2, TriangleAlert } from "lucide-react";
+import { CloudCheck, CloudDownload, Loader2, RotateCw, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { keepPlan, retryFailed, storageEstimate, unkeepPlan } from "@/features/offline/downloads";
+import { keepPlan, retryFailed, storageEstimate } from "@/features/offline/downloads";
 import { useDownloads, useFileIndex, useKeptPlans } from "@/features/offline/hooks";
 import { fitsInStorage, formatBytes, missingSheets, offlineStatus, totalBytes, type SheetRef } from "@/features/offline/status";
 import { useOnline } from "@/features/offline/use-online";
 
 /**
- * "Keep offline" for a plan (spec v2 §4.5, §5.1): shows the download size first, progress while
- * downloading, failures with Retry, and Remove. Kept plans update themselves after each sync.
+ * "Keep offline" for a plan (spec v2 §4.5, §5.1), on one line above the setlist: shows the download
+ * size first, progress while downloading, and failures with Retry. Kept plans update themselves after
+ * each sync; "Remove from device" is in the plan's More menu.
  */
 export function KeepOffline({ planId, sheets }: { planId: string; sheets: SheetRef[] }) {
   const online = useOnline();
@@ -43,14 +44,9 @@ export function KeepOffline({ planId, sheets }: { planId: string; sheets: SheetR
     await keepPlan(planId).finally(() => setBusy(false));
   }
 
-  async function remove() {
-    setBusy(true);
-    await unkeepPlan(planId).finally(() => setBusy(false));
-  }
-
   return (
-    <div className="mb-4 grid gap-2 rounded-lg border p-3 text-sm">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <div className="mb-3 grid gap-2 text-sm">
+      <div className="flex min-h-11 flex-wrap items-center justify-between gap-2">
         <p role="status" className="flex items-center gap-2">
           {inProgress.length ? (
             <>
@@ -73,26 +69,15 @@ export function KeepOffline({ planId, sheets }: { planId: string; sheets: SheetR
             </>
           )}
         </p>
-        <div className="flex flex-wrap gap-2">
-          {!isKept && missing.length && online ? (
-            <Button className="h-11 gap-2" onClick={() => void keep()} disabled={busy}>
-              <CloudDownload className="size-4" aria-hidden />
-              Keep offline · {missing.length} {missing.length === 1 ? "sheet" : "sheets"} · {formatBytes(totalBytes(missing))}
-            </Button>
-          ) : null}
-          {!isKept && !missing.length ? (
-            <Button variant="outline" className="h-11 gap-2" onClick={() => void keep()} disabled={busy}>
-              <CloudCheck className="size-4" aria-hidden />
-              Keep offline
-            </Button>
-          ) : null}
-          {isKept ? (
-            <Button variant="outline" className="h-11 gap-2" onClick={() => void remove()} disabled={busy}>
-              <Trash2 className="size-4" aria-hidden />
-              Remove from device
-            </Button>
-          ) : null}
-        </div>
+        {!isKept && online && !inProgress.length ? (
+          <Button variant="outline" className="h-11 gap-2" onClick={() => void keep()} disabled={busy}>
+            {missing.length ? (
+              <>Keep offline · {formatBytes(totalBytes(missing))}</>
+            ) : (
+              "Keep offline"
+            )}
+          </Button>
+        ) : null}
       </div>
       {!online && !isKept && missing.length ? (
         <p className="text-muted-foreground">Connect to the internet to keep this plan offline.</p>

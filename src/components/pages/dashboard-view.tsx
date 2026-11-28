@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { CalendarDays, ListMusic, Music, Plus, Upload } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { EventDateLine } from "@/components/events/event-list";
 import { PageHeader } from "@/components/layout/page-header";
 import { LocalSkeleton, OnlineOnly } from "@/components/local/states";
@@ -60,8 +60,8 @@ export function DashboardView() {
       {data === undefined ? (
         <LocalSkeleton />
       ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Widget id="upcoming" title="Upcoming events" icon={CalendarDays} href="/events" empty="No upcoming events.">
+        <div className="grid gap-12 md:gap-16">
+          <Widget id="upcoming" title="Upcoming events" href="/events" empty="No upcoming events.">
             {data.events.map((e) => (
               <Row key={e.id} href={`/event?id=${e.id}`} title={e.title}>
                 <EventDateLine eventDate={e.eventDate} startTime={e.startTime} /> · {e.planCount}{" "}
@@ -69,14 +69,14 @@ export function DashboardView() {
               </Row>
             ))}
           </Widget>
-          <Widget id="plans" title="Recently updated plans" icon={ListMusic} href="/plans" empty="No plans yet.">
+          <Widget id="plans" title="Recently updated plans" href="/plans" empty="No plans yet.">
             {data.plans.map((p) => (
               <Row key={p.id} href={`/plan?id=${p.id}`} title={p.title} badge={<OfflineBadge status={p.offline} />}>
                 {p.songCount} {p.songCount === 1 ? "song" : "songs"} · updated {relativeTime(p.updated_at)}
               </Row>
             ))}
           </Widget>
-          <Widget id="music" title="Recently added music" icon={Music} href="/library" empty="No music in the library yet.">
+          <Widget id="music" title="Recently added music" href="/library" empty="No music in the library yet.">
             {data.music.map((m) => (
               <Row key={m.id} href={`/song?id=${m.id}`} title={m.title}>
                 {m.composer ? `${m.composer} · ` : null}added {relativeTime(m.created_at)}
@@ -92,33 +92,30 @@ export function DashboardView() {
 function Widget({
   id,
   title,
-  icon: Icon,
   href,
   empty,
   children,
 }: {
   id: string;
   title: string;
-  icon: typeof Music;
   href: string;
   empty: string;
   children: ReactNode[];
 }) {
   return (
-    <section aria-labelledby={`${id}-heading`} className="rounded-lg border">
-      <div className="flex items-center justify-between gap-2 border-b px-4 py-2">
-        <h2 id={`${id}-heading`} className="flex items-center gap-2 font-semibold">
-          <Icon className="size-4 text-muted-foreground" aria-hidden />
+    <section aria-labelledby={`${id}-heading`}>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 id={`${id}-heading`} className="text-2xl font-semibold">
           {title}
         </h2>
-        <Link href={href} className="min-h-11 content-center text-sm underline underline-offset-4">
+        <Link href={href} className="min-h-11 shrink-0 content-center text-sm underline underline-offset-4">
           View all<span className="sr-only"> {title.toLowerCase()}</span>
         </Link>
       </div>
       {children.length ? (
-        <ul className="divide-y">{children}</ul>
+        <ul className="-mx-3 divide-y border-y">{children}</ul>
       ) : (
-        <p className="px-4 py-6 text-sm text-muted-foreground">{empty}</p>
+        <p className="border-y py-6 text-muted-foreground">{empty}</p>
       )}
     </section>
   );
@@ -126,7 +123,7 @@ function Widget({
 
 function Row({ href, title, badge, children }: { href: string; title: string; badge?: ReactNode; children: ReactNode }) {
   return (
-    <li className="relative px-4 py-3 hover:bg-accent/50">
+    <li className="relative px-3 py-3 hover:bg-surface-soft">
       <div className="flex items-center justify-between gap-2">
         <Link href={href} className="font-medium after:absolute after:inset-0">
           {title}

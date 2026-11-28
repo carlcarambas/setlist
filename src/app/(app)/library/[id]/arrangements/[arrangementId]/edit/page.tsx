@@ -7,7 +7,7 @@ import { z } from "zod";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionSkeleton } from "@/components/layout/section-skeleton";
 import { ArchiveToggle, ArrangementForm, ReplaceFileForm } from "@/components/music/edit-forms";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SettingsSection } from "@/components/layout/settings-section";
 import { getArrangement } from "@/features/library/queries";
 import { formatFileSize } from "@/features/library/schemas";
 import { publicEnv } from "@/lib/env";
@@ -47,31 +47,16 @@ async function EditArrangement({ params }: Pick<Props, "params">) {
         description={`${arrangement.title} · ${arrangement.piece.title}`}
         actions={<ArchiveToggle kind="arrangement" id={arrangement.id} archived={archived} name={arrangement.title} />}
       />
-      <div className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              <h2>Details</h2>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ArrangementForm arrangement={arrangement} />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              <h2>Replace PDF</h2>
-            </CardTitle>
-            <CardDescription>
-              Current file: {arrangement.original_filename} ({formatFileSize(arrangement.file_size_bytes)}). Plans that
-              use this arrangement will show the new file.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ReplaceFileForm arrangementId={arrangement.id} maxMb={publicEnv().NEXT_PUBLIC_MAX_UPLOAD_MB} />
-          </CardContent>
-        </Card>
+      <div className="grid gap-12 md:gap-16">
+        <SettingsSection title="Details">
+          <ArrangementForm arrangement={arrangement} />
+        </SettingsSection>
+        <SettingsSection
+          title="Replace PDF"
+          description={`Current file: ${arrangement.original_filename} (${formatFileSize(arrangement.file_size_bytes)}). Plans that use this arrangement will show the new file.`}
+        >
+          <ReplaceFileForm arrangementId={arrangement.id} maxMb={publicEnv().NEXT_PUBLIC_MAX_UPLOAD_MB} />
+        </SettingsSection>
       </div>
     </>
   );

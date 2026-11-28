@@ -36,7 +36,7 @@ export function EventsView() {
       />
       <section aria-labelledby="events-heading">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 id="events-heading" className="font-semibold">
+          <h2 id="events-heading" className="text-xl font-medium">
             {past ? "Past events" : "Upcoming events"}
             {events ? ` (${events.length})` : null}
           </h2>

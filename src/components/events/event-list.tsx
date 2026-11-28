@@ -15,9 +15,9 @@ export function EventDateLine({ eventDate, startTime }: { eventDate: string; sta
 
 export function EventList({ events }: { events: EventListItem[] }) {
   return (
-    <ul className="divide-y rounded-lg border">
+    <ul className="-mx-3 divide-y border-y">
       {events.map((e) => (
-        <li key={e.id} className="relative flex flex-wrap items-center justify-between gap-2 p-4 hover:bg-accent/50">
+        <li key={e.id} className="relative flex flex-wrap items-center justify-between gap-2 px-3 py-4 hover:bg-surface-soft">
           <div className="min-w-0">
             <Link href={`/event?id=${e.id}`} className="font-medium after:absolute after:inset-0">
               {e.title}

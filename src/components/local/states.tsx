@@ -10,7 +10,7 @@ import { requestSync } from "@/features/sync/engine";
 export function LocalSkeleton() {
   return (
     <div aria-busy="true" aria-label="Loading" className="space-y-4">
-      <div className="h-8 w-48 animate-pulse rounded-md bg-muted" />
+      <div className="h-8 w-48 animate-pulse rounded-lg bg-muted" />
       <div className="h-40 animate-pulse rounded-lg bg-muted" />
     </div>
   );
@@ -49,7 +49,7 @@ export function OnlineOnly({ children, label = "Needs a connection" }: { childre
   const online = useOnline();
   if (online) return <>{children}</>;
   return (
-    <span className="inline-flex min-h-11 items-center gap-2 rounded-md border border-dashed px-3 text-sm text-muted-foreground">
+    <span className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface-soft px-4 text-sm text-muted-foreground">
       <WifiOff className="size-4" aria-hidden />
       {label}
     </span>

@@ -10,9 +10,7 @@ import { Label } from "@/components/ui/label";
 import { initialFormState } from "@/features/auth/form-state";
 import { attachPlanToEvent, deleteEvent, detachPlanFromEvent } from "@/features/events/actions";
 import { requestSync } from "@/features/sync/engine";
-
-const selectClass =
-  "h-11 w-full min-w-0 rounded-md border border-input bg-background px-2 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 
 function Pending({ idle, busy, icon }: { idle: string; busy: string; icon: React.ReactNode }) {
   const { pending } = useFormStatus();
@@ -98,16 +96,17 @@ export function AttachForm({
       <input type="hidden" name={pick === "plan" ? "eventId" : "planId"} value={fixedId} />
       <Label htmlFor={fieldId}>{pick === "plan" ? "Add a plan" : "Add to an upcoming event"}</Label>
       <div className="flex gap-2">
-        <select id={fieldId} name={pick === "plan" ? "planId" : "eventId"} className={selectClass} required defaultValue="">
-          <option value="" disabled>
-            {pick === "plan" ? "Choose a plan…" : "Choose an event…"}
-          </option>
-          {options.map((o) => (
-            <option key={o.id} value={o.id}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+        {/* Keyed so a choice that was just added doesn't stay selected. */}
+        <Select key={options.map((o) => o.id).join()} name={pick === "plan" ? "planId" : "eventId"} required>
+          <SelectTrigger id={fieldId} className="w-full" placeholder={pick === "plan" ? "Choose a plan…" : "Choose an event…"} />
+          <SelectContent>
+            {options.map((o) => (
+              <SelectItem key={o.id} value={o.id}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button type="submit" variant="outline" className="h-11 shrink-0 gap-2">
           <Pending idle="Add" busy="Adding…" icon={<Plus className="size-4" aria-hidden />} />
         </Button>

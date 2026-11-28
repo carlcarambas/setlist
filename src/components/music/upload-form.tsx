@@ -124,7 +124,7 @@ export function UploadForm({
 
       {isNewPiece ? (
         <fieldset className="grid gap-4" disabled={busy}>
-          <legend className="mb-2 font-semibold">Song</legend>
+          <legend className="mb-3 font-rounded text-xl font-medium">Song</legend>
           <Field
             name="title"
             label="Title"
@@ -164,7 +164,7 @@ export function UploadForm({
       ) : null}
 
       <fieldset className="grid gap-4" disabled={busy}>
-        <legend className="mb-2 font-semibold">{isNewPiece ? "Sheet" : "New arrangement"}</legend>
+        <legend className="mb-3 font-rounded text-xl font-medium">{isNewPiece ? "Sheet" : "New arrangement"}</legend>
         <Field
           name="arrangementTitle"
           label="Arrangement name"
@@ -196,7 +196,7 @@ export function UploadForm({
             onChange={onFileChange}
             aria-invalid={errors.file?.length ? true : undefined}
             aria-describedby="file-hint"
-            className="block w-full rounded-md border bg-background text-sm file:mr-3 file:h-11 file:border-0 file:border-r file:bg-muted file:px-4 file:font-medium"
+            className="block w-full overflow-hidden rounded-full border border-input bg-background text-sm file:mr-3 file:h-11 file:border-0 file:border-r file:border-input file:bg-surface-soft file:px-4 file:font-medium"
           />
           <p id="file-hint" className="text-xs text-muted-foreground">
             PDF only, up to {maxMb} MB.
@@ -225,7 +225,7 @@ export function UploadForm({
 
 function DuplicateWarning({ duplicates }: { duplicates: DuplicateHint[] }) {
   return (
-    <div role="status" className="flex gap-3 rounded-md border border-amber-500/50 bg-amber-50 p-3 text-sm dark:bg-amber-950/30">
+    <div role="status" className="flex gap-3 rounded-lg border border-input bg-surface-soft p-3 text-sm">
       <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
       <div>
         <p className="font-medium">This might already be in the library:</p>

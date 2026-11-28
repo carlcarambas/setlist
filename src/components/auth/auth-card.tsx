@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
+/** A sign-in style screen: centred heading, then the form, flat on the page. */
 export function AuthCard({
   title,
   description,
@@ -11,24 +11,22 @@ export function AuthCard({
   children: ReactNode;
 }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          <h1 className="text-xl">{title}</h1>
-        </CardTitle>
-        {description ? <CardDescription>{description}</CardDescription> : null}
-      </CardHeader>
-      <CardContent>{children}</CardContent>
-    </Card>
+    <div className="grid gap-8">
+      <div className="grid gap-2 text-center">
+        <h1 className="text-[1.75rem] leading-tight font-medium md:text-3xl">{title}</h1>
+        {description ? <p className="text-pretty text-muted-foreground">{description}</p> : null}
+      </div>
+      {children}
+    </div>
   );
 }
 
 export function FormSkeleton() {
   return (
     <div className="grid gap-4" aria-busy="true" aria-label="Loading">
-      <div className="h-16 animate-pulse rounded-md bg-muted" />
-      <div className="h-16 animate-pulse rounded-md bg-muted" />
-      <div className="h-11 animate-pulse rounded-md bg-muted" />
+      <div className="h-16 animate-pulse rounded-lg bg-muted" />
+      <div className="h-16 animate-pulse rounded-lg bg-muted" />
+      <div className="h-11 animate-pulse rounded-full bg-muted" />
     </div>
   );
 }

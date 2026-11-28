@@ -9,12 +9,18 @@ const loadPdfViewer = () => import("./pdf-viewer");
 const PdfViewer = dynamic(loadPdfViewer, {
   ssr: false,
   loading: () => (
-    <div role="status" className="flex min-h-48 items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
+    <div role="status" className="flex min-h-48 items-center justify-center rounded-lg border text-sm text-muted-foreground">
       Loading viewer…
     </div>
   ),
 });
 
-export function SheetViewer({ file, title }: { file: string | Blob; title: string }) {
-  return <PdfViewer file={file} title={title} />;
+export function SheetViewer(props: {
+  file: string | Blob;
+  title: string;
+  onTap?: () => void;
+  hideControls?: boolean;
+  fullScreen?: boolean;
+}) {
+  return <PdfViewer {...props} />;
 }

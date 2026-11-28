@@ -26,7 +26,7 @@ export const primaryNav: NavItem[] = [
 // Administrator-only navigation (spec v2 §6).
 export const adminNav: NavItem[] = [
   { href: "/admin/administrators", label: "Administrators", icon: UserCog },
-  { href: "/admin/settings", label: "App Settings", icon: SlidersHorizontal },
+  { href: "/admin/settings", label: "App settings", icon: SlidersHorizontal },
 ];
 
 export const settingsNav: NavItem = { href: "/settings", label: "Settings", icon: Settings };

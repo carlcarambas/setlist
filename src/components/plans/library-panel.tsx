@@ -44,14 +44,14 @@ export function LibraryPanel({
         <label htmlFor="library-search" className="sr-only">
           Search songs by title
         </label>
-        <Search className="pointer-events-none absolute top-3.5 left-3 size-4 text-muted-foreground" aria-hidden />
+        <Search className="pointer-events-none absolute top-3.5 left-4 size-4 text-muted-foreground" aria-hidden />
         <Input
           id="library-search"
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search songs by title"
-          className="h-11 pl-9"
+          className="h-11 pl-10"
         />
       </div>
       <p className="text-xs text-muted-foreground" aria-live="polite">
@@ -69,7 +69,7 @@ export function LibraryPanel({
       </p>
 
       {results && results.length === 0 && !loading ? (
-        <p className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
+        <p className="rounded-lg border p-4 text-center text-sm text-muted-foreground">
           {query ? "No songs match." : "The library has no songs yet."}{" "}
           <Link href="/library/new" className="underline underline-offset-4">
             Add music
@@ -91,7 +91,7 @@ export function LibraryPanel({
                     <Button
                       type="button"
                       variant="outline"
-                      className="h-10 shrink-0 gap-1"
+                      className="shrink-0 gap-1"
                       disabled={disabled}
                       onClick={() => {
                         onAdd(song, a);

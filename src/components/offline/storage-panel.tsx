@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CloudDownload, HardDrive, Loader2, ShieldCheck, Trash2 } from "lucide-react";
+import { CloudDownload, Loader2, Trash2 } from "lucide-react";
+import { SettingsRow, SettingsSection } from "@/components/layout/settings-section";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { localDb } from "@/features/local-db/db";
 import { useLiveQuery } from "@/features/local-db/use-live-query";
 import {
@@ -64,85 +64,84 @@ export function StoragePanel() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          <h2>Storage on this device</h2>
-        </CardTitle>
-        <CardDescription>
-          Plans, songs and events are always kept here. Sheets are kept when you open them, keep a plan offline, or
-          download them below.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-4 text-sm">
-        <dl className="grid gap-3">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <HardDrive className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-            <dt className="shrink-0 text-muted-foreground">Sheets saved:</dt>
-            <dd>
-              {files ? `${files.size} (${formatBytes(savedBytes)})` : "…"}
-              {kept?.size ? ` · ${kept.size} ${kept.size === 1 ? "plan" : "plans"} kept offline` : null}
-            </dd>
-          </div>
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <HardDrive className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-            <dt className="shrink-0 text-muted-foreground">Space used:</dt>
-            <dd>
-              {estimate?.usage !== undefined && estimate.quota
-                ? `${formatBytes(estimate.usage)} of ${formatBytes(estimate.quota)} available to Setlist`
-                : "Not reported by this browser"}
-            </dd>
-          </div>
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <ShieldCheck className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-            <dt className="shrink-0 text-muted-foreground">Protected from automatic cleanup:</dt>
-            <dd className="flex items-center gap-2">
-              {persisted === null ? "…" : persisted ? "Yes" : "Not yet"}
-              {persisted === false ? (
-                <Button variant="outline" className="h-9" onClick={() => void requestPersistentStorage().then(setPersisted)}>
-                  Ask the browser
-                </Button>
-              ) : null}
-            </dd>
-          </div>
-        </dl>
+    <SettingsSection
+      title="Storage on this device"
+      description="Plans, songs and events are always kept here. Sheets are kept when you open them, keep a plan offline, or download them below."
+    >
+      <dl className="border-t">
+        <SettingsRow label="Sheets saved">
+          {files ? `${files.size} (${formatBytes(savedBytes)})` : "…"}
+          {kept?.size ? ` · ${kept.size} ${kept.size === 1 ? "plan" : "plans"} kept offline` : null}
+        </SettingsRow>
+        <SettingsRow label="Space used">
+          {estimate?.usage !== undefined && estimate.quota
+            ? `${formatBytes(estimate.usage)} of ${formatBytes(estimate.quota)}`
+            : "Not reported by this browser"}
+        </SettingsRow>
+        <SettingsRow label="Protected from automatic cleanup">
+          {persisted === null ? "…" : persisted ? "Yes" : "Not yet"}
+          {persisted === false ? (
+            <Button
+              variant="outline"
+              className="h-11 px-5"
+              onClick={() => void requestPersistentStorage().then(setPersisted)}
+            >
+              Ask the browser
+            </Button>
+          ) : null}
+        </SettingsRow>
+      </dl>
 
-        <div className="flex flex-wrap gap-2">
-          {downloading ? (
-            <p role="status" className="flex min-h-11 items-center gap-2">
-              <Loader2 className="size-4 animate-spin" aria-hidden />
-              Downloading {downloading} {downloading === 1 ? "sheet" : "sheets"}…
-            </p>
-          ) : missing.length && online ? (
-            <Button variant="outline" className="h-11 gap-2" onClick={() => void downloadLibrary()}>
-              <CloudDownload className="size-4" aria-hidden />
-              Download the whole library · {missing.length} {missing.length === 1 ? "sheet" : "sheets"} ·{" "}
-              {formatBytes(totalBytes(missing))}
-            </Button>
-          ) : library?.length && !missing.length ? (
-            <p className="flex min-h-11 items-center">Every sheet in the library is on this device.</p>
-          ) : null}
-          {files?.size ? (
-            <Button variant="outline" className="h-11 gap-2" onClick={() => void removeSheets()} disabled={busy}>
-              <Trash2 className="size-4" aria-hidden />
-              Remove all downloaded sheets
-            </Button>
-          ) : null}
-          <Button variant="outline" className="h-11 gap-2" onClick={() => void clearAll()} disabled={busy || !online}>
+      {downloading ? (
+        <p role="status" className="flex min-h-11 items-center gap-2">
+          <Loader2 className="size-4 animate-spin" aria-hidden />
+          Downloading {downloading} {downloading === 1 ? "sheet" : "sheets"}…
+        </p>
+      ) : missing.length && online ? (
+        <Button
+          className="h-auto min-h-11 w-full gap-2 px-5 py-2 whitespace-normal sm:w-auto sm:justify-self-start"
+          onClick={() => void downloadLibrary()}
+        >
+          <CloudDownload className="size-4" aria-hidden />
+          <span className="text-balance">
+            Download the whole library ·{" "}
+            <span className="whitespace-nowrap">
+              {missing.length} {missing.length === 1 ? "sheet" : "sheets"} · {formatBytes(totalBytes(missing))}
+            </span>
+          </span>
+        </Button>
+      ) : library?.length && !missing.length ? (
+        <p className="flex min-h-11 items-center">Every sheet in the library is on this device.</p>
+      ) : null}
+      {downloads.storageFull ? (
+        <p role="alert" className="text-destructive">Storage on this device is full. Remove downloads to free space.</p>
+      ) : null}
+      {notice ? (
+        <p role="alert" className="text-destructive">
+          {notice}
+        </p>
+      ) : null}
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+        {files?.size ? (
+          <Button variant="outline" className="h-11 gap-2 px-5" onClick={() => void removeSheets()} disabled={busy}>
             <Trash2 className="size-4" aria-hidden />
-            Clear all offline data
+            Remove all downloaded sheets
           </Button>
-        </div>
-        {!online ? <p className="text-muted-foreground">Clearing offline data needs a connection to download it again.</p> : null}
-        {downloads.storageFull ? (
-          <p role="alert" className="text-destructive">Storage on this device is full. Remove downloads to free space.</p>
         ) : null}
-        {notice ? (
-          <p role="alert" className="text-destructive">
-            {notice}
-          </p>
-        ) : null}
-      </CardContent>
-    </Card>
+        <Button
+          variant="outline"
+          className="h-11 gap-2 px-5"
+          onClick={() => void clearAll()}
+          disabled={busy || !online}
+        >
+          <Trash2 className="size-4" aria-hidden />
+          Clear all offline data
+        </Button>
+      </div>
+      {!online ? (
+        <p className="text-sm text-muted-foreground">Clearing offline data needs a connection to download it again.</p>
+      ) : null}
+    </SettingsSection>
   );
 }

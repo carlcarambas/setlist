@@ -15,7 +15,7 @@ export function MobileTabBarLinks({ pathname = null }: { pathname?: string | nul
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 bg-surface-dark pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       <ul className="grid grid-cols-5">
         {[...primaryNav, settingsNav].map(({ href, label, icon: Icon }) => {
@@ -27,11 +27,18 @@ export function MobileTabBarLinks({ pathname = null }: { pathname?: string | nul
                 aria-label={label}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex min-h-14 flex-col items-center justify-center gap-1 border-t-2 border-transparent text-xs text-muted-foreground",
-                  active && "border-primary font-semibold text-foreground",
+                  "group flex min-h-16 flex-col items-center justify-center gap-1 text-xs text-white/70 outline-none",
+                  active && "font-semibold text-white",
                 )}
               >
-                <Icon className="size-5" aria-hidden />
+                <span
+                  className={cn(
+                    "flex h-8 w-14 items-center justify-center rounded-full transition-colors duration-150 group-active:bg-white/10 group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-highlight motion-reduce:transition-none",
+                    active && "bg-highlight text-black group-active:bg-highlight",
+                  )}
+                >
+                  <Icon className="size-5" aria-hidden />
+                </span>
                 {mobileLabels[href]}
               </Link>
             </li>

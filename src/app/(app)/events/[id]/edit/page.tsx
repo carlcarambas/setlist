@@ -35,7 +35,7 @@ async function Edit({ params }: Pick<PageProps<"/events/[id]/edit">, "params">) 
         <ArrowLeft className="size-4" aria-hidden />
         Back to event
       </Link>
-      <h1 className="mb-6 text-2xl font-semibold tracking-tight">Edit event</h1>
+      <h1 className="mb-8 text-[1.75rem] leading-tight font-medium md:text-3xl">Edit event</h1>
       <EventForm event={event} />
     </>
   );

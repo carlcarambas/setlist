@@ -1,7 +1,18 @@
+import { cn } from "@/lib/utils";
+
 const LABEL = { draft: "Draft", published: "Published", archived: "Archived" } as const;
 
 export function PlanStatusBadge({ status }: { status: keyof typeof LABEL }) {
-  return <span className="rounded-full border px-2 py-0.5 text-xs">{LABEL[status]}</span>;
+  return (
+    <span
+      className={cn(
+        "rounded-full border px-2 py-0.5 text-xs",
+        status === "draft" && "border-attention bg-attention-soft text-foreground",
+      )}
+    >
+      {LABEL[status]}
+    </span>
+  );
 }
 
 export function relativeTime(iso: string) {

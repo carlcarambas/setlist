@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { ArrowLeft, CalendarDays, Pencil } from "lucide-react";
 import { LocalSkeleton, NotOnDevice, OnlineOnly } from "@/components/local/states";
 import { KeepOffline } from "@/components/offline/keep-offline";
-import { ArchivePlanButton, DeletePlanButton, DuplicatePlanButton } from "@/components/plans/plan-actions";
+import { PlanMenu } from "@/components/plans/plan-actions";
 import { PlanSongs } from "@/components/plans/plan-songs";
 import { SharePlanButton } from "@/components/plans/share-plan-button";
 import { PlanStatusBadge, relativeTime } from "@/components/plans/plan-status";
@@ -37,7 +37,7 @@ export function PlanView() {
   const events = useLiveQuery(() => listPlanEvents(localDb(), id), [id]) ?? [];
 
   const back = (
-    <Link href="/plans" className="mb-4 inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+    <Link href="/plans" className="mb-1 inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
       <ArrowLeft className="size-4" aria-hidden />
       Plans
     </Link>
@@ -57,9 +57,9 @@ export function PlanView() {
   return (
     <>
       {back}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">{plan.title}</h1>
+      <div className="mb-4 flex flex-col gap-3">
+        <div className="min-w-0 space-y-2">
+          <h1 className="text-[1.75rem] leading-tight font-medium md:text-3xl">{plan.title}</h1>
           <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             <PlanStatusBadge status={plan.status} />
             <span>
@@ -67,30 +67,39 @@ export function PlanView() {
               {plan.editorName ? ` by ${plan.editorName}` : null}
             </span>
           </p>
-          {plan.description ? <p className="max-w-prose pt-1 whitespace-pre-line">{plan.description}</p> : null}
+          {plan.description ? <p className="max-w-prose whitespace-pre-line">{plan.description}</p> : null}
         </div>
-        <div className="flex flex-wrap items-start gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <SharePlanButton planId={plan.id} title={plan.title} />
           <OnlineOnly label="Editing needs a connection">
-            <div className="flex flex-wrap gap-2">
-              {!archived ? (
-                <Button asChild className="h-11 gap-2">
-                  <Link href={`/plans/${plan.id}/edit`}>
-                    <Pencil className="size-4" aria-hidden />
-                    Edit
-                  </Link>
-                </Button>
-              ) : null}
-              <DuplicatePlanButton planId={plan.id} />
-              <ArchivePlanButton planId={plan.id} archived={archived} />
-              {isAdmin ? <DeletePlanButton planId={plan.id} title={plan.title} /> : null}
-            </div>
+            {!archived ? (
+              <Button asChild variant="outline" className="h-11 gap-2">
+                <Link href={`/plans/${plan.id}/edit`}>
+                  <Pencil className="size-4" aria-hidden />
+                  Edit
+                </Link>
+              </Button>
+            ) : null}
           </OnlineOnly>
+          <PlanMenu planId={plan.id} title={plan.title} archived={archived} isAdmin={isAdmin} />
         </div>
       </div>
 
+      {archived ? (
+        <p role="status" className="mb-4 rounded-lg border bg-surface-soft p-3 text-sm">
+          <strong>Archived.</strong> This plan is read-only. Restore it to make changes.
+        </p>
+      ) : null}
+
+      <KeepOffline
+        planId={plan.id}
+        sheets={plan.items
+          .filter((i) => i.arrangementId)
+          .map((i) => ({ arrangementId: i.arrangementId, version: i.fileVersion, bytes: i.bytes }))}
+      />
+      <PlanSongs items={plan.items} />
       {events.length ? (
-        <ul aria-label="Events for this plan" className="mb-6 flex flex-wrap gap-2">
+        <ul aria-label="Events for this plan" className="mt-4 flex flex-wrap gap-2">
           {events.map((e) => (
             <li key={e.id}>
               <Link
@@ -104,20 +113,6 @@ export function PlanView() {
           ))}
         </ul>
       ) : null}
-
-      {archived ? (
-        <p role="status" className="mb-4 rounded-md border p-3 text-sm">
-          <strong>Archived.</strong> This plan is read-only. Restore it to make changes.
-        </p>
-      ) : null}
-
-      <KeepOffline
-        planId={plan.id}
-        sheets={plan.items
-          .filter((i) => i.arrangementId)
-          .map((i) => ({ arrangementId: i.arrangementId, version: i.fileVersion, bytes: i.bytes }))}
-      />
-      <PlanSongs items={plan.items} />
       <PlanActivity planId={plan.id} version={plan.version} />
     </>
   );

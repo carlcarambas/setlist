@@ -59,7 +59,7 @@ export function SongView() {
       />
 
       {archived ? (
-        <p role="status" className="mb-6 rounded-md border p-3 text-sm">
+        <p role="status" className="mb-6 rounded-lg border bg-surface-soft p-3 text-sm">
           <strong>Archived.</strong> This song is hidden from the library and can&apos;t get new arrangements.
           Plans that already use it keep working.
         </p>
@@ -69,7 +69,7 @@ export function SongView() {
       {piece.tags.length ? (
         <p className="mb-6 flex flex-wrap gap-2 text-xs">
           {piece.tags.map((tag) => (
-            <Link key={tag} href={`/library?tag=${encodeURIComponent(tag)}`} className="rounded-full bg-muted px-2 py-0.5 hover:underline">
+            <Link key={tag} href={`/library?tag=${encodeURIComponent(tag)}`} className="rounded-full bg-muted px-3 py-1 hover:underline">
               #{tag}
             </Link>
           ))}
@@ -78,7 +78,7 @@ export function SongView() {
 
       <section aria-labelledby="arrangements-heading">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 id="arrangements-heading" className="text-lg font-semibold">
+          <h2 id="arrangements-heading" className="text-xl font-medium">
             Arrangements ({piece.arrangements.length})
           </h2>
           {isAdmin && !archived ? (
@@ -94,11 +94,11 @@ export function SongView() {
         </div>
 
         {piece.arrangements.length === 0 ? (
-          <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">No sheets yet.</p>
+          <p className="rounded-lg border p-6 text-center text-sm text-muted-foreground">No sheets yet.</p>
         ) : (
-          <ul className="divide-y rounded-lg border">
+          <ul className="-mx-3 divide-y border-y">
             {piece.arrangements.map((a) => (
-              <li key={a.id} className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
+              <li key={a.id} className="flex flex-col gap-3 px-3 py-4 md:flex-row md:items-center md:justify-between">
                 <div className="min-w-0">
                   <p className="font-medium">
                     {a.title}
@@ -120,7 +120,7 @@ export function SongView() {
                     sheet={{ arrangementId: a.id, version: a.fileVersion, bytes: a.file_size_bytes }}
                     title={a.title}
                   />
-                  <Button asChild className="h-11 gap-2">
+                  <Button asChild variant={piece.arrangements.length === 1 ? "default" : "outline"} className="h-11 gap-2">
                     <Link href={`/sheet?id=${a.id}`}>
                       <Eye className="size-4" aria-hidden />
                       View

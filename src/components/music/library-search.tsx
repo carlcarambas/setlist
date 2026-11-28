@@ -1,10 +1,15 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { LibrarySearch } from "@/features/library/schemas";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 
-/** Plain GET form: works without JavaScript and keeps the search in the URL. */
+/** Plain GET form, so the search stays in the URL. */
 export function LibrarySearchForm({ search, categories }: { search: LibrarySearch; categories: string[] }) {
   const filtered = search.q || search.category || search.tag || search.archived;
   return (
@@ -14,7 +19,7 @@ export function LibrarySearchForm({ search, categories }: { search: LibrarySearc
           Search by title
         </label>
         <Input id="q" name="q" type="search" placeholder="Search by title" defaultValue={search.q} className="h-11" />
-        <Button type="submit" className="h-11 gap-2">
+        <Button type="submit" variant="outline" className="h-11 gap-2">
           <Search className="size-4" aria-hidden />
           <span className="sr-only sm:not-sr-only">Search</span>
         </Button>
@@ -23,22 +28,11 @@ export function LibrarySearchForm({ search, categories }: { search: LibrarySearc
         <label htmlFor="category" className="sr-only">
           Category
         </label>
-        <select
-          id="category"
-          name="category"
-          defaultValue={search.category}
-          className="h-11 rounded-md border bg-background px-3"
-        >
-          <option value="">All categories</option>
-          {categories.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
+        {/* Keyed so that clearing the filters resets it. */}
+        <CategorySelect key={search.category} initial={search.category} categories={categories} />
         {search.tag ? <input type="hidden" name="tag" value={search.tag} /> : null}
         <label className="flex min-h-11 items-center gap-2">
-          <input type="checkbox" name="archived" value="1" defaultChecked={search.archived} className="size-4" />
+          <Checkbox key={String(search.archived)} name="archived" value="1" defaultChecked={search.archived} />
           Include archived
         </label>
         {search.tag ? (
@@ -53,6 +47,31 @@ export function LibrarySearchForm({ search, categories }: { search: LibrarySearc
         ) : null}
       </div>
     </form>
+  );
+}
+
+const ALL = "all categories";
+
+/** "All categories" submits an empty value, which Radix can't give an item. */
+function CategorySelect({ initial, categories }: { initial: string; categories: string[] }) {
+  const [value, setValue] = useState(initial);
+  // The current filter stays listed while the categories are still loading.
+  const options = initial && !categories.includes(initial) ? [initial, ...categories] : categories;
+  return (
+    <>
+      <input type="hidden" name="category" value={value} />
+      <Select value={value || ALL} onValueChange={(v) => setValue(v === ALL ? "" : v)}>
+        <SelectTrigger id="category" className="min-w-48" />
+        <SelectContent>
+          <SelectItem value={ALL}>All categories</SelectItem>
+          {options.map((c) => (
+            <SelectItem key={c} value={c}>
+              {c}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </>
   );
 }
 

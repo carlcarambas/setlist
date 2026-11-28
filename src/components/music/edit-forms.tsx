@@ -142,7 +142,7 @@ export function ReplaceFileForm({ arrangementId, maxMb }: { arrangementId: strin
         type="file"
         accept="application/pdf,.pdf"
         disabled={busy}
-        className="block w-full rounded-md border bg-background text-sm file:mr-3 file:h-11 file:border-0 file:border-r file:bg-muted file:px-4 file:font-medium"
+        className="block w-full overflow-hidden rounded-full border border-input bg-background text-sm file:mr-3 file:h-11 file:border-0 file:border-r file:border-input file:bg-surface-soft file:px-4 file:font-medium"
       />
       <Button type="submit" variant="outline" className="h-11 gap-2 sm:w-48" disabled={busy}>
         {busy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Upload className="size-4" aria-hidden />}
